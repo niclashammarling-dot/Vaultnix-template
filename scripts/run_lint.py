@@ -1,0 +1,259 @@
+"""
+run_lint.py — Vault weekly lint check.
+
+Reads all wiki/ markdown files, runs mechanical graph checks, then passes
+results + content to an LLM for higher-level analysis.
+
+LLM provider and model are read from vault.config.yaml.
+API keys are read from the environment (or an optional env_file in config).
+"""
+from collections import defaultdict
+from datetime import date
+from pathlib import Path
+import re
+import os
+
+try:
+    import yaml
+except ImportError:
+    raise ImportError("PyYAML required: pip install pyyaml")
+
+from openai import OpenAI
+
+VAULT_ROOT = Path(__file__).parent.parent
+
+
+# ---------------------------------------------------------------------------
+# Config loading
+# ---------------------------------------------------------------------------
+
+def load_config() -> dict:
+    config_path = VAULT_ROOT / "vault.config.yaml"
+    if not config_path.exists():
+        raise FileNotFoundError(
+            f"vault.config.yaml not found at {config_path}. "
+            "Run the setup wizard or create the config manually."
+        )
+    with open(config_path, encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+
+def load_env_file(config: dict) -> None:
+    """Load API keys from an optional env_file declared in config."""
+    env_file = config.get("env_file", "").strip()
+    if not env_file:
+        return
+    env_path = VAULT_ROOT / env_file
+    if not env_path.exists():
+        return
+    for line in env_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
+
+
+def resolve_llm(config: dict) -> tuple[str, str, str]:
+    """Return (api_key, model, provider) using primary LLM config, falling back if needed."""
+    llm = config.get("llm", {})
+    primary = llm.get("primary", {})
+    fallback = llm.get("fallback", {})
+
+    primary_key = os.environ.get(primary.get("api_key_env", ""), "")
+    if primary_key:
+        return primary_key, primary.get("model", "gpt-4o"), primary.get("provider", "openai")
+
+    fallback_key = os.environ.get(fallback.get("api_key_env", ""), "")
+    if fallback_key:
+        return fallback_key, fallback.get("model", "gpt-4o"), fallback.get("provider", "openai")
+
+    raise EnvironmentError(
+        f"No API key found. Set {primary.get('api_key_env')} "
+        f"(or {fallback.get('api_key_env')} as fallback) in your environment."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Mechanical graph checks — authoritative, not LLM-inferred
+# ---------------------------------------------------------------------------
+
+WIKI_DIR = VAULT_ROOT / "wiki"
+LINT_DIR = VAULT_ROOT / "lint"
+
+WIKILINK_RE = re.compile(r'\[\[([^\]|#]+)')
+
+
+def build_graph(wiki_files: list[Path]) -> tuple[dict, dict, dict]:
+    """Return (slug_to_file, outbound, inbound) maps."""
+    slug_to_file: dict[str, Path] = {}
+    for p in wiki_files:
+        slug_to_file[p.stem] = p
+
+    outbound: dict[str, list[str]] = defaultdict(list)
+    inbound: dict[str, list[str]] = defaultdict(list)
+
+    for p in wiki_files:
+        src = p.stem
+        text = p.read_text(encoding="utf-8")
+        targets = WIKILINK_RE.findall(text)
+        for raw in targets:
+            tgt = raw.strip()
+            if tgt and tgt != src:
+                outbound[src].append(tgt)
+                inbound[tgt].append(src)
+
+    return slug_to_file, dict(outbound), dict(inbound)
+
+
+def mechanical_checks(wiki_files: list[Path]) -> str:
+    slug_to_file, outbound, inbound = build_graph(wiki_files)
+    all_slugs = set(slug_to_file)
+
+    orphans = sorted(
+        s for s in all_slugs
+        if len(inbound.get(s, [])) == 0
+    )
+
+    stubs: dict[str, list[str]] = defaultdict(list)
+    for src, targets in outbound.items():
+        for tgt in targets:
+            if tgt not in all_slugs:
+                stubs[tgt].append(src)
+
+    weak = sorted(
+        (s, len(outbound.get(s, [])))
+        for s in all_slugs
+        if len(outbound.get(s, [])) < 3
+    )
+
+    hubs = sorted(
+        ((s, len(v)) for s, v in inbound.items() if s in all_slugs),
+        key=lambda x: -x[1]
+    )[:10]
+
+    lines = ["## Mechanical Graph Checks (authoritative — do not re-derive these)\n"]
+
+    lines.append(f"### True Orphans ({len(orphans)} articles with 0 inbound links)")
+    if orphans:
+        for s in orphans:
+            lines.append(f"- `{s}` — inbound: 0")
+    else:
+        lines.append("- None")
+
+    lines.append(f"\n### Stub Links ({len(stubs)} wikilinks with no target file)")
+    if stubs:
+        for tgt in sorted(stubs):
+            sources = ", ".join(f"`{s}`" for s in sorted(set(stubs[tgt])))
+            lines.append(f"- `[[{tgt}]]` — linked from: {sources}")
+    else:
+        lines.append("- None")
+
+    lines.append(f"\n### Weak Nodes (fewer than 3 outbound links)")
+    if weak:
+        for s, count in weak:
+            lines.append(f"- `{s}` — {count} outbound")
+    else:
+        lines.append("- None")
+
+    lines.append(f"\n### Top Hubs by Inbound Link Count")
+    for s, count in hubs:
+        lines.append(f"- `{s}` — {count} inbound")
+
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# LLM lint
+# ---------------------------------------------------------------------------
+
+LINT_PROMPT = """\
+You are the knowledge compiler for this vault. The mechanical graph checks \
+below are authoritative — they were computed by parsing actual wikilinks. \
+Do NOT re-derive orphan counts, stub lists, or weak node lists. Use the \
+mechanical results as ground truth for the Graph Health section.
+
+Write a structured markdown report covering:
+
+## Graph Health
+- Use the mechanical checks above verbatim for orphans, stubs, and weak nodes
+- Suggest specific backlink sources for each true orphan
+- Flag any project domains with no MOC
+
+## Topology Health
+- Clusters with no cross-domain links (isolated islands) — flag
+- Are the top hubs (from mechanical checks) the right conceptual centers?
+- If the longest path between any two MOCs exceeds 4 hops, suggest a bridging concept article
+
+## Content Health
+- Articles with status: draft — flag
+- Open Questions never addressed — surface the best 5
+- Contradictions between articles in the same project — flag both
+
+## Contradiction Scan
+- Flag any direct conflicts between articles in the same project
+- Suggest escalation path: flag in Open Questions of both articles + surface in Pending Review
+
+## Growth Suggestions
+- 3 cross-project concept articles the corpus is clearly missing
+- 3 Open Questions worth turning into new raw/ sources
+
+Be concrete. Name specific files, specific missing links, specific stub targets.
+"""
+
+
+def gather_wiki(wiki_files: list[Path]) -> str:
+    parts = []
+    for path in sorted(wiki_files):
+        rel = path.relative_to(VAULT_ROOT)
+        parts.append(f"=== {rel} ===\n{path.read_text(encoding='utf-8')}")
+    return "\n\n".join(parts)
+
+
+def call_llm(content: str, api_key: str, model: str, provider: str) -> str:
+    if provider == "xai":
+        client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
+    else:
+        client = OpenAI(api_key=api_key)
+
+    print(f"Using {provider}/{model}")
+    resp = client.chat.completions.create(
+        model=model,
+        max_tokens=4096,
+        messages=[{"role": "user", "content": f"{LINT_PROMPT}\n\n{content}"}],
+    )
+    return resp.choices[0].message.content
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+def main() -> None:
+    config = load_config()
+    load_env_file(config)
+    api_key, model, provider = resolve_llm(config)
+
+    print("Reading wiki...")
+    wiki_files = sorted(WIKI_DIR.rglob("*.md"))
+    content = gather_wiki(wiki_files)
+    print(f"{len(wiki_files):,} files, {len(content):,} chars")
+
+    print("Running mechanical checks...")
+    mechanical = mechanical_checks(wiki_files)
+    print(mechanical)
+
+    print("Running LLM lint...")
+    report = call_llm(f"{mechanical}\n\n## Vault Content\n\n{content}", api_key, model, provider)
+
+    LINT_DIR.mkdir(exist_ok=True)
+    today = date.today().isoformat()
+    output = LINT_DIR / f"{today}-lint.md"
+    output.write_text(
+        f"---\ndate: {today}\ntype: lint\n---\n\n{mechanical}\n\n---\n\n{report}\n",
+        encoding="utf-8",
+    )
+    print(f"Written: {output}")
+
+
+if __name__ == "__main__":
+    main()

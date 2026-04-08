@@ -1,0 +1,37 @@
+name: Weekly Vault Lint
+
+on:
+  schedule:
+    - cron: "23 8 * * 1"   # Monday 08:23 UTC — override in vault.config.yaml
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install openai pyyaml
+
+      - name: Run lint
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python scripts/run_lint.py
+
+      - name: Commit report
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add --force lint/
+          git diff --cached --quiet && echo "Nothing to commit" && exit 0
+          git commit -m "lint: $(date +%Y-%m-%d)"
+          git push

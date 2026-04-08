@@ -1,0 +1,7 @@
+raw/
+outputs/
+.env
+__pycache__/
+*.pyc
+*.Zone.Identifier
+.obsidian/
