@@ -34,20 +34,26 @@ domains:
 
 # ------------------------------------
 # LLM configuration
-# Primary is used for lint and compilation. Fallback is optional.
-# api_key_env: name of the environment variable containing the API key.
-# Supported providers: openai, xai, anthropic
+# Local-first: Ollama runs on your machine with no API key or internet.
+# Online providers (openai, xai, anthropic) are optional upgrades.
+#
+# Supported providers:
+#   ollama   — local, free, no API key (install: https://ollama.com)
+#   openai   — requires OPENAI_API_KEY
+#   xai      — requires XAI_API_KEY
+#   anthropic — requires ANTHROPIC_API_KEY
+#
+# Resolution order: primary → fallback → auto-detect Ollama if running.
 # ------------------------------------
 llm:
   primary:
-    provider: "openai"             # openai | xai | anthropic
+    provider: "ollama"
+    model: "llama3.2"              # run: ollama pull llama3.2
+
+  fallback:                        # optional — add an online provider here
+    provider: "openai"
     model: "gpt-4o"
     api_key_env: "OPENAI_API_KEY"
-
-  fallback:                        # optional — remove if not needed
-    provider: "xai"
-    model: "grok-3"
-    api_key_env: "XAI_API_KEY"
 
 # Local .env file to load keys from (optional).
 # Path is relative to vault root. Leave blank to use shell environment only.

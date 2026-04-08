@@ -162,52 +162,65 @@ def collect_domains() -> list[dict]:
     return domains
 
 
-def collect_llm() -> dict:
+def collect_llm() -> tuple[dict, str]:
     section("3 / 5 — LLM Configuration")
     print(dim(
-        "  The compiler and lint scripts call an LLM via API.\n"
-        "  API keys are read from environment variables — never stored in config.\n"
+        "  Braindex is local-first: Ollama runs on your machine with no API key\n"
+        "  or internet connection required. Online providers are optional.\n"
+        "\n"
+        "  Ollama install: https://ollama.com\n"
+        "  Then pull a model: ollama pull llama3.2\n"
     ))
 
-    provider = ask_choice(
-        "Primary LLM provider",
-        choices=["openai", "xai", "anthropic"],
-        default="openai",
-    )
+    use_ollama = ask_yn("  Use Ollama as primary LLM (local, free)?", default=True)
 
-    model_defaults = {
+    online_model_defaults = {
         "openai":    "gpt-4o",
         "xai":       "grok-3",
         "anthropic": "claude-opus-4-6",
     }
-    model = ask("Model name", default=model_defaults[provider])
-
-    key_defaults = {
+    online_key_defaults = {
         "openai":    "OPENAI_API_KEY",
         "xai":       "XAI_API_KEY",
         "anthropic": "ANTHROPIC_API_KEY",
     }
-    api_key_env = ask(
-        "Environment variable containing the API key",
-        default=key_defaults[provider],
-    )
 
-    primary = {"provider": provider, "model": model, "api_key_env": api_key_env}
-    fallback = None
+    if use_ollama:
+        model = ask("Ollama model", default="llama3.2")
+        primary = {"provider": "ollama", "model": model}
 
-    if ask_yn("\n  Configure a fallback LLM?", default=False):
-        fb_provider = ask_choice(
-            "Fallback provider",
+        fallback = None
+        if ask_yn("\n  Add an online provider as fallback (used when Ollama is unavailable)?",
+                  default=False):
+            fb_provider = ask_choice(
+                "Online fallback provider",
+                choices=["openai", "xai", "anthropic"],
+                default="openai",
+            )
+            fb_model = ask("Model name", default=online_model_defaults[fb_provider])
+            fb_key   = ask("API key env var", default=online_key_defaults[fb_provider])
+            fallback = {"provider": fb_provider, "model": fb_model, "api_key_env": fb_key}
+    else:
+        print(dim("\n  Online provider — API key must be set in your environment.\n"))
+        provider = ask_choice(
+            "Provider",
             choices=["openai", "xai", "anthropic"],
             default="openai",
         )
-        fb_model = ask("Fallback model name", default=model_defaults[fb_provider])
-        fb_key   = ask("Fallback API key env var", default=key_defaults[fb_provider])
-        fallback = {"provider": fb_provider, "model": fb_model, "api_key_env": fb_key}
+        model      = ask("Model name", default=online_model_defaults[provider])
+        api_key_env = ask("API key env var", default=online_key_defaults[provider])
+        primary  = {"provider": provider, "model": model, "api_key_env": api_key_env}
+        fallback = None
+
+        if ask_yn("\n  Add Ollama as fallback (used when online provider is unavailable)?",
+                  default=True):
+            ollama_model = ask("Ollama fallback model", default="llama3.2")
+            fallback = {"provider": "ollama", "model": ollama_model}
 
     env_file = ""
-    if ask_yn("\n  Load API keys from a .env file in the vault root?", default=False):
-        env_file = ask("Path to .env file (relative to vault root)", default=".env")
+    if not use_ollama or fallback and fallback.get("provider") != "ollama":
+        if ask_yn("\n  Load API keys from a .env file in the vault root?", default=False):
+            env_file = ask("Path to .env file (relative to vault root)", default=".env")
 
     result = {"primary": primary}
     if fallback:

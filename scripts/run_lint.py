@@ -18,7 +18,7 @@ try:
 except ImportError:
     raise ImportError("PyYAML required: pip install pyyaml")
 
-from openai import OpenAI
+import llm as llmlib
 
 VAULT_ROOT = Path(__file__).parent.parent
 
@@ -51,26 +51,6 @@ def load_env_file(config: dict) -> None:
         if line and not line.startswith("#") and "=" in line:
             k, v = line.split("=", 1)
             os.environ.setdefault(k.strip(), v.strip())
-
-
-def resolve_llm(config: dict) -> tuple[str, str, str]:
-    """Return (api_key, model, provider) using primary LLM config, falling back if needed."""
-    llm = config.get("llm", {})
-    primary = llm.get("primary", {})
-    fallback = llm.get("fallback", {})
-
-    primary_key = os.environ.get(primary.get("api_key_env", ""), "")
-    if primary_key:
-        return primary_key, primary.get("model", "gpt-4o"), primary.get("provider", "openai")
-
-    fallback_key = os.environ.get(fallback.get("api_key_env", ""), "")
-    if fallback_key:
-        return fallback_key, fallback.get("model", "gpt-4o"), fallback.get("provider", "openai")
-
-    raise EnvironmentError(
-        f"No API key found. Set {primary.get('api_key_env')} "
-        f"(or {fallback.get('api_key_env')} as fallback) in your environment."
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -209,21 +189,6 @@ def gather_wiki(wiki_files: list[Path]) -> str:
     return "\n\n".join(parts)
 
 
-def call_llm(content: str, api_key: str, model: str, provider: str) -> str:
-    if provider == "xai":
-        client = OpenAI(api_key=api_key, base_url="https://api.x.ai/v1")
-    else:
-        client = OpenAI(api_key=api_key)
-
-    print(f"Using {provider}/{model}")
-    resp = client.chat.completions.create(
-        model=model,
-        max_tokens=4096,
-        messages=[{"role": "user", "content": f"{LINT_PROMPT}\n\n{content}"}],
-    )
-    return resp.choices[0].message.content
-
-
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -231,7 +196,7 @@ def call_llm(content: str, api_key: str, model: str, provider: str) -> str:
 def main() -> None:
     config = load_config()
     load_env_file(config)
-    api_key, model, provider = resolve_llm(config)
+    lc = llmlib.resolve(config)
 
     print("Reading wiki...")
     wiki_files = sorted(WIKI_DIR.rglob("*.md"))
@@ -243,7 +208,7 @@ def main() -> None:
     print(mechanical)
 
     print("Running LLM lint...")
-    report = call_llm(f"{mechanical}\n\n## Vault Content\n\n{content}", api_key, model, provider)
+    report = llmlib.call(lc, f"{LINT_PROMPT}\n\n{mechanical}\n\n## Vault Content\n\n{content}")
 
     LINT_DIR.mkdir(exist_ok=True)
     today = date.today().isoformat()
