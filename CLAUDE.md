@@ -23,14 +23,14 @@ When asked (or when an incident, bug, or finding arises):
 1. Create a `feedback_*.md` note in the appropriate `raw/[project]/` folder.
 2. Evaluate structural implications: Does this warrant a hook (vault), Open Territory update (MOC), or design constraint?
 3. Write the raw learning note.
-4. Trigger a compile so the learning enters the permanent graph.
+4. Run `python3 scripts/compile.py` (or trigger the scheduled compile) so the learning enters the permanent graph.
 
 Every learning must compound the graph.
 
 ### Session Close
 When {{OWNER}} says "wrap up", "close session", "commit and conclude", or similar:
 1. Write a session note to `outputs/[project]/YYYY-MM-DD-[topic].md` using `templates/session.md`.
-2. Trigger a compile so the session enters the permanent graph.
+2. Run `python3 scripts/compile.py` so the session enters the permanent graph.
 
 ### Vault Structure
 
