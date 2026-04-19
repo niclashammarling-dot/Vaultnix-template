@@ -36,8 +36,7 @@ try:
 except ImportError:
     raise ImportError("croniter required: pip install croniter")
 
-VAULT_ROOT = Path(__file__).parent.parent
-SCRIPTS_DIR = VAULT_ROOT / "scripts"
+VAULT_ROOT: Path = None  # type: ignore[assignment]  # set in main()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -52,7 +51,9 @@ log = logging.getLogger("vault-scheduler")
 # ---------------------------------------------------------------------------
 
 def load_config() -> dict:
-    config_path = VAULT_ROOT / "vault.config.yaml"
+    from braindex.vault import require_vault
+    vault = require_vault()
+    config_path = vault / "vault.config.yaml"
     if not config_path.exists():
         raise FileNotFoundError(
             f"vault.config.yaml not found at {config_path}."
@@ -77,7 +78,7 @@ def build_jobs(config: dict) -> list[dict]:
             jobs.append({
                 "name": "nightly-compile",
                 "cron": trigger,
-                "script": SCRIPTS_DIR / "compile.py",
+                "cmd": ["braindex", "compile"],
             })
         elif trigger.startswith("trig_"):
             log.warning(
@@ -92,7 +93,25 @@ def build_jobs(config: dict) -> list[dict]:
         jobs.append({
             "name": "weekly-lint",
             "cron": cron,
-            "script": SCRIPTS_DIR / "run_lint.py",
+            "cmd": ["braindex", "lint"],
+        })
+
+    benchmark_cfg = config.get("benchmark", {})
+    if benchmark_cfg.get("schedule"):
+        cron = benchmark_cfg["schedule"]
+        jobs.append({
+            "name": "weekly-benchmark",
+            "cron": cron,
+            "cmd": ["braindex", "benchmark"],
+        })
+
+    orient_cfg = config.get("orient", {})
+    if orient_cfg.get("schedule"):
+        cron = orient_cfg["schedule"]
+        jobs.append({
+            "name": "weekly-orient",
+            "cron": cron,
+            "cmd": ["braindex", "orient"],
         })
 
     return jobs
@@ -102,7 +121,7 @@ def build_jobs(config: dict) -> list[dict]:
 # Scheduler loop
 # ---------------------------------------------------------------------------
 
-SENTINEL_DIR = VAULT_ROOT / "logs" / "scheduler"
+SENTINEL_DIR: Path = None  # type: ignore[assignment]  # set in main()
 
 
 def next_run(cron_expr: str, after: datetime | None = None) -> datetime:
@@ -141,7 +160,7 @@ def run_job(job: dict) -> bool:
     log.info("Running job: %s", job["name"])
     try:
         result = subprocess.run(
-            [sys.executable, str(job["script"])],
+            job["cmd"],
             cwd=str(VAULT_ROOT),
         )
         if result.returncode == 0:
@@ -157,6 +176,11 @@ def run_job(job: dict) -> bool:
 
 
 def main() -> None:
+    global VAULT_ROOT, SENTINEL_DIR
+    from braindex.vault import require_vault
+    VAULT_ROOT   = require_vault()
+    SENTINEL_DIR = VAULT_ROOT / "logs" / "scheduler"
+
     config = load_config()
     jobs = build_jobs(config)
 

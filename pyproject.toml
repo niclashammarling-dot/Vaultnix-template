@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "braindex"
+version = "0.1.0"
+description = "Agent-operated knowledge vault — compile your thinking into a compounding knowledge graph"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=1.0.0",
+    "pyyaml>=6.0",
+    "croniter>=2.0.0",
+]
+
+[project.optional-dependencies]
+rich = ["rich>=13.0.0"]
+
+[project.scripts]
+braindex = "braindex.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["braindex*"]
+
+[tool.setuptools.package-data]
+braindex = [
+    "data/**/*",
+    "data/**/.*",     # include dotfiles like .gitignore
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

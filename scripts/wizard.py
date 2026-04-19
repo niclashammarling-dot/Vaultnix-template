@@ -11,6 +11,8 @@ from pathlib import Path
 import subprocess
 import sys
 import textwrap
+import urllib.request
+import urllib.error
 
 try:
     import yaml
@@ -99,17 +101,55 @@ def ask_yn(prompt: str, default: bool = True) -> bool:
 # Section collectors
 # ---------------------------------------------------------------------------
 
+def _validate_vault_path(path_str: str) -> str | None:
+    """Return error message if path is invalid, else None."""
+    if not path_str:
+        return "Path cannot be empty."
+    p = Path(path_str)
+    if not p.is_absolute():
+        return "Path must be absolute (start with / on Linux/Mac or a drive letter on Windows)."
+    if p.is_file():
+        return f"A file already exists at {p} — choose a directory path."
+    if p.is_dir() and any(p.iterdir()):
+        # Non-empty dir is a warning, not a hard error — we'll ask the user
+        return None
+    return None
+
+
 def collect_identity() -> dict:
     section("1 / 5 — Vault Identity")
     print(dim("  Name your vault and tell the agent who steers it.\n"))
 
     name  = ask("Vault name", default="My Vault")
     owner = ask("Your name (used in agent prompts)", default="")
-    path  = ask(
-        "Absolute path where the vault will be created",
-        default=str(Path.home() / name.replace(" ", "-")),
-    )
-    return {"name": name, "owner": owner, "path": path}
+
+    print(dim(
+        "\n  Vault path: '.' means this repo becomes your vault (recommended).\n"
+        "  Set an absolute path to create the vault in a separate directory.\n"
+    ))
+    while True:
+        path_str = ask(
+            "Vault path",
+            default=".",
+        )
+        # "." and relative paths are always valid — they resolve to the repo root
+        if not Path(path_str).is_absolute():
+            print(ok(f"  Vault will be set up at: {(BRAINDEX_ROOT / path_str).resolve()}"))
+            break
+
+        err_msg = _validate_vault_path(path_str)
+        if err_msg:
+            print(warn(f"  {err_msg}"))
+            continue
+
+        p = Path(path_str)
+        if p.is_dir() and any(p.iterdir()):
+            print(warn(f"  Directory exists and is not empty."))
+            if not ask_yn("  Continue? (setup.py skips existing files)", default=False):
+                continue
+        break
+
+    return {"name": name, "owner": owner, "path": path_str}
 
 
 def collect_domains() -> list[dict]:
@@ -124,12 +164,18 @@ def collect_domains() -> list[dict]:
               "  sentences is enough; you can refine vault.config.yaml later.\n"))
 
     domains = []
+    import re as _re
+    _valid_domain = _re.compile(r'^[a-z][a-z0-9-]*$')
+
     while True:
         print()
         name = ask(
             f"Domain name (lowercase-hyphenated, e.g. 'marketing')",
             required=True,
         )
+        if not _valid_domain.match(name):
+            print(warn("  Domain names must be lowercase, start with a letter, and use only a-z, 0-9, hyphens."))
+            continue
         if name in ("knowledge-work", "inspiration"):
             print(warn(f"  '{name}' is a structural domain — always included. Skip it."))
             continue
@@ -186,6 +232,17 @@ def collect_llm() -> tuple[dict, str]:
     }
 
     if use_ollama:
+        # Health check before committing to Ollama
+        try:
+            urllib.request.urlopen("http://localhost:11434", timeout=2)
+            print(ok("  Ollama is running."))
+        except (urllib.error.URLError, OSError):
+            print(warn(
+                "  Ollama is not reachable at localhost:11434.\n"
+                "  Install: https://ollama.com  |  Start: ollama serve\n"
+                "  You can still configure it now and start it before compiling."
+            ))
+
         model = ask("Ollama model", default="llama3.2")
         primary = {"provider": "ollama", "model": model}
 
@@ -240,10 +297,14 @@ def collect_git() -> dict:
 
     repo = ""
     if platform == "github-actions":
-        repo = ask(
-            "GitHub repo (owner/repo)",
-            default="your-username/your-vault",
-        )
+        while True:
+            repo = ask(
+                "GitHub repo (owner/repo)",
+                default="your-username/your-vault",
+            )
+            if "/" in repo and not repo.startswith("/") and repo.count("/") == 1:
+                break
+            print(warn("  Format must be 'owner/repo' (e.g. 'alice/my-vault')"))
 
     schedule = ask("Lint cron schedule (UTC)", default="23 8 * * 1")
 
@@ -282,7 +343,8 @@ def print_summary(config: dict) -> None:
     print(f"  Vault:    {vault['name']}  ({vault['path']})")
     print(f"  Owner:    {vault['owner']}")
     print(f"  Domains:  {', '.join(d['name'] for d in domains)} + knowledge-work, inspiration")
-    print(f"  LLM:      {llm.get('provider')}/{llm.get('model')}  (key: {llm.get('api_key_env')})")
+    key_info = llm.get('api_key_env') or "none (local)"
+    print(f"  LLM:      {llm.get('provider')}/{llm.get('model')}  (key env: {key_info})")
     lint = config.get("lint", {})
     print(f"  Lint:     {lint.get('platform')}  schedule='{lint.get('schedule')}'")
     compile_cfg = config.get("compile", {})

@@ -78,3 +78,19 @@ compile:
   mode: "manual"                   # manual | scheduled
   # If scheduled, set a cron expression:
   # trigger: "0 22 * * *"
+
+# ------------------------------------
+# Benchmark — weekly vault quality scoring
+# Run: braindex benchmark
+# Generate queries: braindex benchmark --generate
+# ------------------------------------
+benchmark:
+  schedule: "30 8 * * 2"           # cron (UTC) — default: Tuesday 08:30
+  queries: []                       # populated by: braindex benchmark --generate
+
+# ------------------------------------
+# Orient — surface highest-value stub gaps
+# Run: braindex orient
+# ------------------------------------
+orient:
+  schedule: ""                      # optional cron to auto-run orient after compile

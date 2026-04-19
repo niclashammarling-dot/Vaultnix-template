@@ -22,24 +22,22 @@ import sys
 import time
 from pathlib import Path
 
-# Ensure sibling scripts are importable regardless of working directory
-sys.path.insert(0, str(Path(__file__).parent))
-
 try:
     import yaml
 except ImportError:
     raise ImportError("PyYAML required: pip install pyyaml")
 
-import llm as llmlib
-import logger as loglib
-import validate as validatelib
+from braindex import llm as llmlib
+from braindex import logger as loglib
+from braindex import validate as validatelib
+from braindex.vault import require_vault
 
-VAULT_ROOT   = Path(__file__).parent.parent
-WIKI_DIR     = VAULT_ROOT / "wiki"
-RAW_DIR      = VAULT_ROOT / "raw"
-LOGS_DIR     = VAULT_ROOT / "logs"
-PROMPT_FILE  = VAULT_ROOT / "Vault" / "COMPILATION_PROMPT.md"
-LOCK_FILE    = LOGS_DIR / ".compile.lock"
+VAULT_ROOT: Path = None  # type: ignore[assignment]  # set in main()
+WIKI_DIR:   Path = None  # type: ignore[assignment]
+RAW_DIR:    Path = None  # type: ignore[assignment]
+LOGS_DIR:   Path = None  # type: ignore[assignment]
+PROMPT_FILE: Path = None  # type: ignore[assignment]
+LOCK_FILE:  Path = None  # type: ignore[assignment]
 
 # Delimiter format the LLM uses to wrap file output
 FILE_START_RE = re.compile(r'^<<<\s*FILE:\s*(.+?)\s*>>>', re.MULTILINE)
@@ -353,13 +351,25 @@ def compile_one(
         )
         return []
 
+    ALLOWED_PREFIXES = ("wiki/", "lint/")
+
     validated: list[tuple[Path, str]] = []
     for file_path_str, content in blocks:
+        # Reject paths outside permitted directories — prevents LLM from writing
+        # to Vault/, templates/, raw/, or the vault root.
+        normalized = file_path_str.lstrip("/").replace("\\", "/")
+        if not any(normalized.startswith(p) for p in ALLOWED_PREFIXES):
+            log.warn(
+                f"Rejected output path '{file_path_str}' — "
+                f"LLM output must be under wiki/ or lint/. Skipped."
+            )
+            continue
+
         # Resolve path relative to vault root
-        wiki_path = VAULT_ROOT / file_path_str.lstrip("/")
+        wiki_path = VAULT_ROOT / normalized
 
         # Validate before accepting
-        result = validatelib.validate_content(content, file_path_str)
+        result = validatelib.validate_content(content, normalized)
         if result.hard_fails:
             log.warn(
                 f"Validation failed for {file_path_str} "
@@ -381,6 +391,14 @@ def compile_one(
 
 
 def main() -> int:
+    global VAULT_ROOT, WIKI_DIR, RAW_DIR, LOGS_DIR, PROMPT_FILE, LOCK_FILE
+    VAULT_ROOT  = require_vault()
+    WIKI_DIR    = VAULT_ROOT / "wiki"
+    RAW_DIR     = VAULT_ROOT / "raw"
+    LOGS_DIR    = VAULT_ROOT / "logs"
+    PROMPT_FILE = VAULT_ROOT / "Vault" / "COMPILATION_PROMPT.md"
+    LOCK_FILE   = LOGS_DIR / ".compile.lock"
+
     parser = argparse.ArgumentParser(description="Vault compilation driver")
     parser.add_argument("--dry-run", action="store_true",
                         help="Print what would happen without calling the LLM")

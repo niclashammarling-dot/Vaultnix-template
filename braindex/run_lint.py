@@ -14,17 +14,16 @@ import re
 import os
 import sys
 
-sys.path.insert(0, str(Path(__file__).parent))
-
 try:
     import yaml
 except ImportError:
     raise ImportError("PyYAML required: pip install pyyaml")
 
-import llm as llmlib
-import logger as loglib
+from braindex import llm as llmlib
+from braindex import logger as loglib
+from braindex.vault import require_vault
 
-VAULT_ROOT = Path(__file__).parent.parent
+VAULT_ROOT: Path = None  # type: ignore[assignment]  # set in main()
 
 
 # ---------------------------------------------------------------------------
@@ -61,8 +60,8 @@ def load_env_file(config: dict) -> None:
 # Mechanical graph checks — authoritative, not LLM-inferred
 # ---------------------------------------------------------------------------
 
-WIKI_DIR = VAULT_ROOT / "wiki"
-LINT_DIR = VAULT_ROOT / "lint"
+WIKI_DIR: Path = None  # type: ignore[assignment]  # set in main()
+LINT_DIR: Path = None  # type: ignore[assignment]
 
 WIKILINK_RE = re.compile(r'\[\[([^\]|#]+)')
 
@@ -206,6 +205,11 @@ def gather_wiki(wiki_files: list[Path]) -> str:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
+    global VAULT_ROOT, WIKI_DIR, LINT_DIR
+    VAULT_ROOT = require_vault()
+    WIKI_DIR   = VAULT_ROOT / "wiki"
+    LINT_DIR   = VAULT_ROOT / "lint"
+
     with loglib.RunLogger("lint") as log:
         config = load_config()
         load_env_file(config)

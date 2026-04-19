@@ -14,9 +14,10 @@ Options:
 Run once after editing vault.config.yaml. Safe to re-run — existing files
 are never overwritten (new domains and directories are added, nothing removed).
 """
+from __future__ import annotations
+
 from pathlib import Path
 import argparse
-import shutil
 import sys
 import textwrap
 
@@ -25,7 +26,7 @@ try:
 except ImportError:
     raise ImportError("PyYAML required: pip install pyyaml")
 
-BRAINDEX_ROOT = Path(__file__).parent.parent
+from braindex.vault import DATA_DIR
 
 # Structural domains always present regardless of user config
 STRUCTURAL_DOMAINS = ["knowledge-work", "inspiration"]
@@ -38,12 +39,13 @@ INSPIRATION_SUBDIRS = ["design", "nature", "brand", "concept"]
 # Config
 # ---------------------------------------------------------------------------
 
-def load_config() -> dict:
-    config_path = BRAINDEX_ROOT / "vault.config.yaml"
+def load_config(config_path: Path | None = None) -> dict:
+    if config_path is None:
+        config_path = Path.cwd() / "vault.config.yaml"
     if not config_path.exists():
         raise FileNotFoundError(
             f"vault.config.yaml not found at {config_path}. "
-            "Edit vault.config.yaml before running setup."
+            "Run 'braindex init' to create one."
         )
     with open(config_path, encoding="utf-8") as f:
         return yaml.safe_load(f)
@@ -336,6 +338,42 @@ date: {date_str}
 """
 
 
+def write_obsidian_exclusions(vault: Path, dry_run: bool) -> None:
+    """
+    Write Obsidian config files so the graph shows only wiki/ articles.
+
+    app.json — userIgnoreFilters: excludes operational dirs from search.
+    graph.json — search:path:wiki + hideUnresolved + no orphans.
+
+    write_file() skips both if the user already has these files.
+    .obsidian/ is gitignored so neither file is committed.
+    """
+    import json
+
+    # app.json: exclude operational/tooling dirs from search and file switcher
+    excluded = [
+        "Vault", "templates", "raw", "outputs", "logs", "lint",
+        "CLAUDE.md", "BENCHMARK.md",
+    ]
+    write_file(
+        vault / ".obsidian" / "app.json",
+        json.dumps({"userIgnoreFilters": excluded}, indent=2) + "\n",
+        dry_run,
+    )
+
+    # graph.json: show only wiki/ files; hide unresolved stubs and orphans
+    write_file(
+        vault / ".obsidian" / "graph.json",
+        json.dumps({
+            "collapse-filter": False,
+            "search": "path:wiki",
+            "hideUnresolved": True,
+            "showOrphans": False,
+        }, indent=2) + "\n",
+        dry_run,
+    )
+
+
 def seed_gitignore() -> str:
     return """raw/
 outputs/
@@ -365,15 +403,8 @@ def main() -> None:
 
     vault_cfg = config["vault"]
     path_str  = vault_cfg["path"].strip()
-
-    # "." or a relative path means the vault is the repo itself (template pattern).
-    # An absolute path creates or populates a separate directory.
-    if not Path(path_str).is_absolute():
-        vault = (BRAINDEX_ROOT / path_str).resolve()
-    else:
-        vault = Path(path_str).expanduser().resolve()
-
-    names = domain_names(config)
+    vault     = Path(path_str).expanduser().resolve()
+    names     = domain_names(config)
 
     from datetime import date
     today = date.today().isoformat()
@@ -388,53 +419,50 @@ def main() -> None:
     print("\n[1] Creating directories...")
     create_dirs(vault, names, dry_run)
 
-    # 2. Copy and fill prompt/config files from Braindex template
+    # 2. Copy and fill prompt/config files from bundled package data
     print("\n[2] Writing prompt and config files...")
-    template_files = {
-        BRAINDEX_ROOT / "CLAUDE.md":                   vault / "CLAUDE.md",
-        BRAINDEX_ROOT / "Vault" / "COMPILATION_PROMPT.md": vault / "Vault" / "COMPILATION_PROMPT.md",
-        BRAINDEX_ROOT / "Vault" / "SESSION_OPENER.md": vault / "Vault" / "SESSION_OPENER.md",
-    }
-    for src, dst in template_files.items():
+    data_template_files = [
+        ("CLAUDE.md",                        vault / "CLAUDE.md"),
+        ("Vault/COMPILATION_PROMPT.md",      vault / "Vault" / "COMPILATION_PROMPT.md"),
+        ("Vault/SESSION_OPENER.md",          vault / "Vault" / "SESSION_OPENER.md"),
+    ]
+    for rel, dst in data_template_files:
+        src = DATA_DIR / rel
         if src.exists():
-            content = fill_placeholders(src.read_text(encoding="utf-8"), config)
+            content = fill_placeholders(src.read_text(encoding="utf-8"), config, today)
             write_file(dst, content, dry_run)
 
-    # Copy scripts unchanged
-    for script in (BRAINDEX_ROOT / "scripts").iterdir():
-        if script.suffix == ".py":
-            write_file(vault / "scripts" / script.name,
-                       script.read_text(encoding="utf-8"), dry_run)
+    # Copy vault.config.yaml — use the live config (already written by wizard)
+    config_src = Path.cwd() / "vault.config.yaml"
+    if not config_src.exists():
+        config_src = DATA_DIR / "vault.config.yaml"
+    write_file(vault / "vault.config.yaml",
+               config_src.read_text(encoding="utf-8"),
+               dry_run)
 
-    # Copy templates unchanged
-    templates_src = BRAINDEX_ROOT / "templates"
+    # Copy templates from bundled data
+    templates_src = DATA_DIR / "templates"
     if templates_src.is_dir():
         for tmpl in templates_src.iterdir():
             if tmpl.is_file():
                 write_file(vault / "templates" / tmpl.name,
                            tmpl.read_text(encoding="utf-8"), dry_run)
 
-    # Copy the user's filled vault.config.yaml (not the template placeholder)
-    config_src = BRAINDEX_ROOT / "vault.config.yaml"
-    write_file(vault / "vault.config.yaml",
-               config_src.read_text(encoding="utf-8"),
-               dry_run)
-
-    # Copy requirements.txt
-    write_file(vault / "requirements.txt",
-               (BRAINDEX_ROOT / "requirements.txt").read_text(encoding="utf-8"),
-               dry_run)
+    # Copy .gitignore from bundled data
+    gitignore_src = DATA_DIR / ".gitignore"
+    if gitignore_src.exists():
+        write_file(vault / ".gitignore",
+                   gitignore_src.read_text(encoding="utf-8"), dry_run)
 
     # 3. Seed wiki content
     print("\n[3] Writing seed articles and MOCs...")
 
-    # Copy pre-written structural wiki articles from Braindex template.
-    # These are the load-bearing philosophy/architecture articles every vault needs.
+    # Copy pre-written structural wiki articles from bundled package data.
     # Index files use fill_placeholders() so user domains appear correctly.
     # write_file() skips existing files — safe to re-run.
     template_wiki_dirs = ["_concepts", "knowledge-work", "_mocs", "_index"]
     for wiki_subdir in template_wiki_dirs:
-        src_dir = BRAINDEX_ROOT / "wiki" / wiki_subdir
+        src_dir = DATA_DIR / "wiki" / wiki_subdir
         if src_dir.is_dir():
             for src_file in sorted(src_dir.iterdir()):
                 if src_file.suffix == ".md" and src_file.is_file():
@@ -443,13 +471,6 @@ def main() -> None:
                     dst = vault / "wiki" / wiki_subdir / src_file.name
                     write_file(dst, content, dry_run)
 
-    # Copy seed raw notes
-    seed_raw_src = BRAINDEX_ROOT / "raw" / "knowledge-work"
-    if seed_raw_src.is_dir():
-        for src_file in sorted(seed_raw_src.iterdir()):
-            if src_file.suffix == ".md" and src_file.is_file():
-                dst = vault / "raw" / "knowledge-work" / src_file.name
-                write_file(dst, src_file.read_text(encoding="utf-8"), dry_run)
 
     # MOC stubs for user domains (knowledge-work-moc is already copied above)
     for name in names:
@@ -473,11 +494,16 @@ def main() -> None:
     print("\n[4] Writing .gitignore...")
     write_file(vault / ".gitignore", seed_gitignore(), dry_run)
 
+    # 4b. Obsidian graph exclusions — keep operational/tooling dirs out of the graph
+    # .obsidian/ is gitignored so this won't be committed; write_file skips if exists.
+    print("\n[4b] Writing Obsidian graph exclusions...")
+    write_obsidian_exclusions(vault, dry_run)
+
     # 5. GitHub Actions workflow (only if platform=github-actions)
     lint_platform = config.get("lint", {}).get("platform", "")
     if lint_platform == "github-actions":
         print("\n[5] Writing GitHub Actions workflow...")
-        gha_src = BRAINDEX_ROOT / ".github" / "workflows" / "weekly-lint.yml"
+        gha_src = DATA_DIR / "github" / "workflows" / "weekly-lint.yml"
         if gha_src.exists():
             write_file(
                 vault / ".github" / "workflows" / "weekly-lint.yml",

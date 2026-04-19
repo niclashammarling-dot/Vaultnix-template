@@ -3,7 +3,7 @@ name: Weekly Vault Lint
 on:
   schedule:
     - cron: "23 8 * * 1"   # Monday 08:23 UTC — override in vault.config.yaml
-  workflow_dispatch:        # allows manual trigger from GitHub Actions UI
+  workflow_dispatch:
 
 jobs:
   lint:
@@ -18,19 +18,19 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - name: Install Braindex
+        run: pip install braindex
 
-      - name: Run mechanical validation
-        run: python scripts/validate.py wiki/
-        continue-on-error: true   # surface violations but don't block lint report
+      - name: Validate wiki
+        run: braindex validate wiki/
+        continue-on-error: true
 
       - name: Run LLM lint
         env:
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: python scripts/run_lint.py
+        run: braindex lint
 
       - name: Commit lint report
         run: |

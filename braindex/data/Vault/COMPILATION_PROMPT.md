@@ -168,7 +168,7 @@ Log every violation clearly: `HOOK FAIL [file.md]: [type] — [issue] — [sugge
 
 For any changed neighborhood: update Summary/Details/Connections/Open Questions as needed.
 
-**Mandatory spreading activation**: One new/updated source must ripple to at least 3–5 articles total. Traverse Connections two hops outward and enrich neighbors where the new content adds value. A single new source should update multiple articles. If it only creates one new article, ask why.
+**Hard minimum — spreading activation**: one raw input must produce 3–5 wiki file writes total (new + updated combined). Creating 1 article and updating 0 is a structural failure — the graph grows heavier without growing more connected. Traverse Connections two hops outward from the new article and enrich neighbors where the new content adds value. If you cannot reach 3 writes, explicitly state why in the compile report.
 
 Run hook enforcement on every updated article.
 
@@ -260,7 +260,10 @@ Philosophical: file-over-app, external cognition, knowledge compounding, honesty
 - ## Concepts: all _concepts/ articles grouped by type
 - ## Inspiration: link to INSPIRATION.md with theme coverage summary
 - ## Recent Additions: date + what changed + what it connects to
-- ## Suggested Next: top 5 stubs prioritized by score (inbound links × cross-domain reach × synthesis potential); list each with a one-line rationale
+- ## Suggested Next: top 5 stubs ranked by inbound link count, then cross-domain reach. Format exactly:
+  `- [[stub-slug]] — N inbound links — [domains that reference it] — [one line: what unlocks if filled]`
+  If there are no stubs yet, write: `- (no stubs — add raw/ sources to generate gaps)`
+  This section is machine-read by `braindex orient`. Format must be exact.
 
 **wiki/_index/MOC-INDEX.md** — for agents needing domain orientation first:
 - Every MOC with its ## Argument text (verbatim)
@@ -359,9 +362,9 @@ Write at domain-expert density. Never explain basics. Assume fluency.
 2. Never delete content — only append and update.
 3. raw/ is read-only. outputs/ is untouched during compilation.
 4. Always use [[wikilinks]]. Never bare text references.
-5. Stubs are intentional. A link to a non-existent article is a signal. Flag it. Never fix it by removing the link.
+5. **Stubs are mandatory output.** Every new article must contain at least 2 [[wikilinks]] to articles that do not yet exist. These are intentional gaps — the graph pointing at what it needs next. Never remove a wikilink because its target doesn't exist. Never "fix" a stub by removing the link. A compile run that creates zero new stubs has failed to compound the graph.
 6. MOCs make arguments. A MOC that is only a list has failed.
-7. Spreading activation is the mechanism. One new source should update multiple articles. If it only creates one new article, ask why.
+7. **Spreading activation is non-negotiable.** One raw input must produce 3–5 wiki file writes (new + updated). A compile that creates 1 article and updates 0 is a structural failure. If you cannot reach 3, state the reason explicitly in the compile report.
 8. Images carry aesthetic data for agent use: color, mood, era, style, composition, typography. Not just subject matter.
 9. Orphaned nodes — articles or images with no inbound links — are structural failures. Fix before proceeding.
 10. Hook enforcement runs after every write.
