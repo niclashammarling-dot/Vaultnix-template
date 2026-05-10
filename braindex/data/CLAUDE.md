@@ -14,7 +14,7 @@ At the beginning of every session:
 Default behavior: Prioritize clearing Pending Review before new work, unless {{OWNER}} directs otherwise.
 
 ### When {{OWNER}} Says "compile" or "run compile"
-- Immediately read `Vault/COMPILATION_PROMPT.md` (or the latest version).
+- Immediately read `wiki/_skills/compilation-skill.md`.
 - Execute the full compilation process exactly as specified.
 - After completion, report the compile summary and ask whether to run lint.
 
@@ -41,6 +41,7 @@ wiki/         ← permanent artifact; only compiled articles enter here
   [domains]/  ← one subdirectory per domain
   _mocs/      ← domain Maps of Content (argumentative, not catalogs)
   _concepts/  ← cross-project concept articles
+  _skills/    ← operational skills (compilation, session agenda)
   _index/     ← INDEX.md, MOC-INDEX.md, INSPIRATION.md
 assets/images/← renamed descriptive image files
 lint/         ← health check reports

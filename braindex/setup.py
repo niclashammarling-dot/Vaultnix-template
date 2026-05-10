@@ -162,7 +162,7 @@ def create_dirs(vault: Path, names: list[str], dry_run: bool) -> None:
         dirs.append(vault / "wiki" / "inspiration" / sub)
 
     # Structural wiki dirs
-    for d in ["_mocs", "_concepts", "_index"]:
+    for d in ["_mocs", "_concepts", "_index", "_skills"]:
         dirs.append(vault / "wiki" / d)
 
     # Asset and tooling dirs
@@ -423,7 +423,6 @@ def main() -> None:
     print("\n[2] Writing prompt and config files...")
     data_template_files = [
         ("CLAUDE.md",                        vault / "CLAUDE.md"),
-        ("Vault/COMPILATION_PROMPT.md",      vault / "Vault" / "COMPILATION_PROMPT.md"),
         ("Vault/SESSION_OPENER.md",          vault / "Vault" / "SESSION_OPENER.md"),
     ]
     for rel, dst in data_template_files:
@@ -460,7 +459,7 @@ def main() -> None:
     # Copy pre-written structural wiki articles from bundled package data.
     # Index files use fill_placeholders() so user domains appear correctly.
     # write_file() skips existing files — safe to re-run.
-    template_wiki_dirs = ["_concepts", "knowledge-work", "_mocs", "_index"]
+    template_wiki_dirs = ["_concepts", "knowledge-work", "_mocs", "_index", "_skills"]
     for wiki_subdir in template_wiki_dirs:
         src_dir = DATA_DIR / "wiki" / wiki_subdir
         if src_dir.is_dir():
@@ -520,7 +519,7 @@ Next steps:
   1. cd {vault}
   2. git init && git add -A && git commit -m "init: vault"
   3. Drop your first raw sources into raw/[domain]/
-  4. Run: python3 scripts/compile.py  (or paste Vault/COMPILATION_PROMPT.md into Claude Code)
+  4. Open Claude Code in the vault directory and say "compile"
   5. Open the vault in Obsidian → Graph View (Ctrl+G) to see your knowledge topology
 """)
 
