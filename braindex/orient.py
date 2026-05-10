@@ -289,6 +289,37 @@ def print_orient(ranked: list[StubScore], top: int, wiki_dir: Path, total_articl
         print(f'  ... and {stub_count - top} more stubs (run with --top N to see more)')
 
 
+def load_nominations(vault: Path) -> list[dict]:
+    """Load query-nominated stubs from vault/data/query_nominations.json."""
+    path = vault / 'data' / 'query_nominations.json'
+    if not path.exists():
+        return []
+    try:
+        return json.loads(path.read_text(encoding='utf-8'))
+    except Exception:
+        return []
+
+
+def print_nominations(nominations: list[dict]) -> None:
+    if not nominations:
+        return
+    ranked = sorted(nominations, key=lambda x: x['count'], reverse=True)
+    print()
+    print('  QUERY-NOMINATED STUBS')
+    print('─' * 48)
+    for entry in ranked:
+        slug = entry['slug']
+        count = entry['count']
+        first = entry.get('first_seen', '?')
+        print(f'  [[{slug}]]  ×{count}  (first seen: {first})')
+        for q in entry['nominated_by'][:2]:
+            q_short = (q[:60] + '…') if len(q) > 60 else q
+            print(f'    ← "{q_short}"')
+        if len(entry['nominated_by']) > 2:
+            print(f'    ← … and {len(entry["nominated_by"]) - 2} more questions')
+        print()
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -328,6 +359,8 @@ def main() -> int:
             return 0
 
         print_orient(ranked, args.top, wiki_dir, total_articles)
+        nominations = load_nominations(vault)
+        print_nominations(nominations)
         return 0
 
 

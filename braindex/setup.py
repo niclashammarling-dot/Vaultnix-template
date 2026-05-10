@@ -169,6 +169,9 @@ def create_dirs(vault: Path, names: list[str], dry_run: bool) -> None:
     for d in ["assets/images", "assets/pdfs", "lint", "templates"]:
         dirs.append(vault / d)
 
+    # Runtime data dir (query nominations, future queue files)
+    dirs.append(vault / "data")
+
     for d in dirs:
         if dry_run:
             print(f"  mkdir  {d.relative_to(vault)}")

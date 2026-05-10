@@ -15,6 +15,8 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import datetime
+import json
 import re
 import sys
 from pathlib import Path
@@ -181,8 +183,8 @@ def build_query_prompt(
     parts = [
         f"You are the query agent for {vault_name}, an agent-operated knowledge vault owned by {owner}.",
         "Answer using only the vault content provided. Be specific and dense.",
-        "If the vault doesn't contain enough to answer well, say exactly what's missing "
-        "and what stub articles would need to exist to answer fully.",
+        "If the vault doesn't contain enough to answer well, name each missing article "
+        "using [[wikilink-slug]] format and explain what it would need to contain.",
         "Never confabulate. Surface gaps honestly. Format your answer in clean markdown.",
         "",
         "---",
@@ -202,6 +204,60 @@ def build_query_prompt(
 
     parts += ["---", f"QUESTION: {question}"]
     return '\n'.join(parts)
+
+
+# ---------------------------------------------------------------------------
+# Gap nomination write-back
+# ---------------------------------------------------------------------------
+
+def _parse_nominations(answer: str) -> list[str]:
+    """Extract [[slug]] wikilinks from the LLM answer — these are gap nominations."""
+    seen: dict[str, None] = {}  # ordered dedup
+    for raw in re.findall(r'\[\[([^\]|#]+?)(?:\|[^\]])?\]\]', answer):
+        slug = raw.strip().lower().replace(' ', '-')
+        seen[slug] = None
+    return list(seen)
+
+
+def _write_nominations(vault: Path, slugs: list[str], question: str) -> None:
+    """Merge gap nominations into vault/data/query_nominations.json.
+
+    Each entry accumulates a count of distinct questions that nominated it.
+    Duplicate question strings don't increment the count.
+    """
+    if not slugs:
+        return
+    nominations_path = vault / 'data' / 'query_nominations.json'
+    nominations_path.parent.mkdir(parents=True, exist_ok=True)
+
+    today = datetime.date.today().isoformat()
+
+    existing: list[dict] = []
+    if nominations_path.exists():
+        try:
+            existing = json.loads(nominations_path.read_text(encoding='utf-8'))
+        except Exception:
+            existing = []
+
+    index: dict[str, dict] = {e['slug']: e for e in existing}
+
+    for slug in slugs:
+        if slug in index:
+            if question not in index[slug]['nominated_by']:
+                index[slug]['nominated_by'].append(question)
+                index[slug]['count'] = len(index[slug]['nominated_by'])
+        else:
+            index[slug] = {
+                'slug': slug,
+                'nominated_by': [question],
+                'count': 1,
+                'first_seen': today,
+            }
+
+    nominations_path.write_text(
+        json.dumps(list(index.values()), indent=2, ensure_ascii=False),
+        encoding='utf-8',
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -240,12 +296,17 @@ def run_query(question: str, vault: Path, depth: int = 8, log_traversal: bool = 
     lc = llmlib.resolve(config)
     answer = llmlib.call(lc, prompt, max_tokens=2048)
 
+    # Step 5: Write back any gap nominations the LLM surfaced
+    nominations = _parse_nominations(answer)
+    _write_nominations(vault, nominations, question)
+
     return {
-        'question':       question,
-        'answer':         answer,
-        'traversal':      walker.traversal,
+        'question':        question,
+        'answer':          answer,
+        'traversal':       walker.traversal,
         'articles_loaded': len(articles),
-        'moc_used':       moc_path,
+        'moc_used':        moc_path,
+        'nominations':     nominations,
     }
 
 
