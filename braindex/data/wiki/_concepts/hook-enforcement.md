@@ -38,7 +38,7 @@ The most common failure mode in automated knowledge compilation is silent struct
 - Open Questions section contains genuine gaps, not rhetorical questions
 - Connections section explains the nature of each link, not just that a link exists
 
-**Implementation split:** `validate.py` handles structural and graph checks mechanically (automated, CI-safe). The COMPILATION_PROMPT handles quality checks by judgment. The split maps to what can be computed vs what requires interpretation.
+**Implementation split:** `validate.py` handles structural and graph checks mechanically (automated, CI-safe). The compilation-skill handles quality checks by judgment. The split maps to what can be computed vs what requires interpretation.
 
 **The fix field:** every hook violation includes a prescribed fix, not just a description of the problem. The enforcement system prescribes, it does not merely diagnose.
 
