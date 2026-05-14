@@ -355,7 +355,11 @@ def main() -> int:
         log.set('top_score', ranked[0].total if ranked else 0)
 
         if args.json:
-            print(json.dumps([s.to_dict() for s in ranked], indent=2, default=list))
+            nominations = load_nominations(vault)
+            print(json.dumps({
+                'stubs': [s.to_dict() for s in ranked],
+                'nominations': nominations,
+            }, indent=2, default=list))
             return 0
 
         print_orient(ranked, args.top, wiki_dir, total_articles)

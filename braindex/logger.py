@@ -7,6 +7,7 @@ All scripts import this module to record their runs.
 from __future__ import annotations
 
 import json
+import sys
 import time
 import uuid
 from datetime import datetime, timezone
@@ -71,9 +72,9 @@ class RunLogger:
             f.write(json.dumps(record) + "\n")
 
         if exc_type:
-            print(f"\nRun {self.run_id} failed after {duration}s: {error}")
+            print(f"\nRun {self.run_id} failed after {duration}s: {error}", file=sys.stderr)
         else:
-            print(f"\nRun {self.run_id} completed in {duration}s.")
+            print(f"\nRun {self.run_id} completed in {duration}s.", file=sys.stderr)
 
         return False  # do not suppress exceptions
 
