@@ -60,7 +60,7 @@ For each candidate, check if the file exists:
 ls wiki/_concepts/[slug].md   # cross-domain concepts
 ls wiki/[domain]/[slug].md    # domain articles
 ```
-Reject any candidate where the file exists — the lint report may be stale. Also reject any candidate that appears as "NEW" in INDEX.md Recent Additions with a date after the lint report date.
+Reject any candidate where the file exists — the lint report may be stale. Also reject any candidate that appears as "NEW" in INDEX.md Recent Additions with a date after the lint report date. Read INDEX.md with `offset=1 limit=80` — this covers 2–3 recent compile entries and is sufficient; do not read the full file.
 
 **3c — Score remaining candidates**
 Four dimensions, 1–10 each, sum to 40:
@@ -80,7 +80,15 @@ Select the top scorer. If top score is below 20, note this in the output.
 
 Read `wiki/_mocs/knowledge-work-moc.md` — extract the first actionable item from `## Open Territory` that is not struck through and not already a committed stub. Prefer items that reduce friction in existing workflows over net-new infrastructure.
 
-### Step 5 — Write SESSION_AGENDA.md
+### Step 5 — Capture HEAD sha
+
+```bash
+git rev-parse HEAD
+```
+
+Store the output as `{current_sha}` for use in the `generated_at_commit:` field below.
+
+### Step 6 — Write SESSION_AGENDA.md
 
 Write to `wiki/_index/SESSION_AGENDA.md`. Hard ceiling: 25 lines. If content would exceed 25 lines, truncate ideas to 1, drop vault improvement rationale to one clause, and shorten stub rationale to one clause.
 
@@ -91,6 +99,7 @@ Write to `wiki/_index/SESSION_AGENDA.md`. Hard ceiling: 25 lines. If content wou
 ```
 # Session Agenda — YYYY-MM-DD
 Generated: YYYY-MM-DD HH:MM
+generated_at_commit: {output of `git rev-parse HEAD`}
 Vault state: N articles | Pending Review: {status line}
 Pending Commitments: {none} OR:
   - [[slug]] — picked YYYY-MM-DD — {one line}
