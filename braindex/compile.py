@@ -149,16 +149,34 @@ def mark_compiled(raw_path: Path) -> None:
     compiled_marker(raw_path).write_text("ok")
 
 
+def _frontmatter_date(path: Path) -> str:
+    """Return frontmatter date: value for staleness-first sorting, or '0000-00-00' if absent."""
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if text.startswith("---"):
+            end = text.find("\n---", 3)
+            fm = text[:end] if end != -1 else text[:500]
+            m = re.search(r"^date:\s*(\S+)", fm, re.MULTILINE)
+            if m:
+                return m.group(1).strip()
+    except OSError:
+        pass
+    return "0000-00-00"
+
+
 def selective_wiki_context(raw_path: Path) -> str:
     """
     Return wiki content relevant to a given raw file.
     Always includes: _mocs/, _concepts/, _index/
     Also includes: articles in the same domain as the raw file.
+    Sorted by frontmatter date: ascending (oldest first) so stale neighbors
+    appear earlier in the prompt, reinforcing the staleness-preference rule
+    in COMPILATION_PROMPT.md.
     """
     domain = raw_path.parent.name  # e.g. "apex" from raw/apex/article.md
     parts = []
 
-    for wiki_file in sorted(WIKI_DIR.rglob("*.md")):
+    for wiki_file in sorted(WIKI_DIR.rglob("*.md"), key=_frontmatter_date):
         # Always include structural directories (check ALL ancestors, not just parent,
         # to handle subdirectories like wiki/inspiration/design/)
         rel_parts = wiki_file.relative_to(WIKI_DIR).parts
