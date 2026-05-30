@@ -55,19 +55,30 @@ will activate more of the graph when filled than one referenced from 1.
 projects? A stub referenced from two different domains is worth more than
 one confined to a single domain.
 
+**Cross-domain bridge potential** — would filling this stub enable new
+`_concepts/` connections between domains not currently linked by that stub?
+A stub that creates a new cross-domain pathway scores higher than one that
+deepens an existing connection.
+
 **MOC alignment** — is this stub listed under `## Open Territory` in any
 MOC? If a MOC explicitly names it as a gap, it's structurally important.
 
-**Synthesis potential** — would filling this stub enable a new claim in
-a MOC's `## Synthesis Claims` section? Stubs that unlock higher-order
+**Synthesis claim potential** — would filling this stub enable a new claim
+in a MOC's `## Synthesis Claims` section? Stubs that unlock higher-order
 arguments score higher than stubs that merely add detail.
 
-Score each stub 1–10 on each dimension. Sum for total. Rank descending.
+Score each stub 1–10 on each dimension. Sum for total (max 50). Rank descending.
+
+**Benchmark-tuned weighting:** after running a benchmark, check which
+dimension scored lowest. Weight that dimension's score ×1.5 when ranking
+stubs. If Surprise (cross-domain reach + bridge potential) is weakest,
+weight both cross-domain dimensions ×1.5. If Synthesis is weakest, weight
+synthesis claim potential ×1.5.
 
 Separate clearly into:
-- **High-value stubs** (total score ≥ 20) — require {{OWNER}}'s thinking
-- **Mid-value stubs** (12–19) — could be filled with focused research
-- **Low-value stubs** (<12) — nightly automation handles these
+- **High-value stubs** (total score ≥ 25) — require {{OWNER}}'s thinking
+- **Mid-value stubs** (15–24) — could be filled with focused research
+- **Low-value stubs** (<15) — nightly automation handles these
 
 Report only the high-value stubs in detail. Briefly acknowledge the others.
 
@@ -81,7 +92,7 @@ For each, provide:
 
 ```
 STUB: [[article-name]]
-Score: N/40
+Score: N/50
 Referenced from: [list of articles that link to it]
 Domains touched: [which projects this stub spans]
 MOC gap: yes/no — [which MOC names this as open territory]
@@ -140,13 +151,13 @@ Vault state:
 
 TOP 3 HIGH-VALUE STUBS
 ────────────────────────────────────────
-1. [[stub-name]] — Score: N/40
+1. [[stub-name]] — Score: N/50
    ...
 
-2. [[stub-name]] — Score: N/40
+2. [[stub-name]] — Score: N/50
    ...
 
-3. [[stub-name]] — Score: N/40
+3. [[stub-name]] — Score: N/50
    ...
 
 Which would you like to work on — or is there something else on your mind?

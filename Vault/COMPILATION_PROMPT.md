@@ -110,7 +110,14 @@ status: draft | active | stable
 
 ## STEP 2B — PROCESS IMAGE ASSETS
 
-For every unprocessed image in raw/inspiration/ or any raw/ subfolder:
+**Split on declared intent first.** Images arrive with one of two purposes, and processing differs:
+
+- **Text extraction intent** (documents, whiteboards, screenshots of articles) — run OCR, extract text, route extracted text through the standard raw/ compilation pipeline as a `.md` file. The image itself is not stored in the vault.
+- **Visual reference intent** (design references, photographs, diagrams) — commit the image to `raw/assets/YYYY-MM/`, then process via the steps below at compile time.
+
+If the intake interface offers a user choice (e.g. "strip text" vs. "save image"), honour the declared intent. If no choice is available, apply a heuristic: images in `raw/assets/YYYY-MM/` are reference intent; images in `raw/inspiration/` are reference intent; images with machine-readable text as their primary content (dense document scans) default to extraction intent.
+
+**Processing for visual reference intent** — for every image in `raw/assets/YYYY-MM/`, `raw/inspiration/`, or any raw/ subfolder flagged as reference:
 
 1. **Read the image.** Describe as an **agent briefing**: subject + specific aesthetic qualities (color names, mood, composition, style, era, typography) + the precise decision or creative direction this image supports. Never use vague praise ("beautiful", "interesting").
 
@@ -169,6 +176,8 @@ Log every violation clearly: `HOOK FAIL [file.md]: [type] — [issue] — [sugge
 For any changed neighborhood: update Summary/Details/Connections/Open Questions as needed.
 
 **Mandatory spreading activation**: One new/updated source must ripple to at least 3–5 articles total. Traverse Connections two hops outward and enrich neighbors where the new content adds value. A single new source should update multiple articles. If it only creates one new article, ask why.
+
+**Neighbor selection — staleness preference**: When multiple two-hop neighbors qualify for activation, prefer those whose frontmatter `date:` is older than 14 days. Staleness is a tiebreaker, not an eligibility gate — if the only qualifying neighbor was updated yesterday, activate it anyway. Use frontmatter `date:` as the staleness signal, not git log; git log captures lint fixes and one-line additions, frontmatter `date:` reflects substantive content updates. The 14-day threshold is a first approximation; revisit after the next benchmark run.
 
 Run hook enforcement on every updated article.
 
