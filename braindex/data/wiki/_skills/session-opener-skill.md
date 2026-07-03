@@ -51,21 +51,17 @@ Read lines 7–15 of `wiki/_index/INDEX.md`. Surface each entry under `## Pendin
 
 Do not proceed to Step 2 until all surfaced commitments have a response.
 
-**Step 2 — Read SESSION_AGENDA.md**
-Read `wiki/_index/SESSION_AGENDA.md`.
+**Step 2 — Regenerate SESSION_AGENDA.md**
+Run [[session-agenda-skill]] unconditionally. Do not read the existing file first and do not check the SHA before deciding — the cache path is retired as an open-time decision gate.
 
-**Cache check (run first):**
-```bash
-git rev-parse HEAD
-```
-Compare the output against the `generated_at_commit:` field in SESSION_AGENDA.md:
-- If they match: vault has not changed since the agenda was generated — present the file content as-is (cache hit).
-- If they differ or `generated_at_commit:` is absent: run [[session-agenda-skill]] to regenerate, then present output (cache miss or pre-patch agenda).
+**Why unconditional:** the SHA-sentinel architecture breaks at multi-session-per-day cadence — same-day writes can arrive after the last agenda generation without triggering a mismatch. The correction overhead of one stale-agenda opener exceeds the cost of one regeneration. The economy the sentinel provided no longer holds at realistic use cadence.
+
+**SHA sentinel (mid-session use only):** the `generated_at_commit:` field remains in the output format. Use it only to detect drift *during* a session — if vault changes land after the opener, the sentinel flags that the agenda is now stale. It is not an open-time skip-gate.
 
 Additionally:
 - If `(hand-generated)` marker is present: note this to {{OWNER}} — content is valid but may not reflect the latest compile.
 
-Present the agenda. Do not editorialize — the file is the opener output.
+Present the regenerated agenda. Do not editorialize — the file is the opener output.
 
 **Step 3 — Concept prompt**
 Ask:
