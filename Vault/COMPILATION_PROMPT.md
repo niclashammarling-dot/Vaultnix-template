@@ -269,7 +269,11 @@ Philosophical: file-over-app, external cognition, knowledge compounding, honesty
 - ## Concepts: all _concepts/ articles grouped by type
 - ## Inspiration: link to INSPIRATION.md with theme coverage summary
 - ## Recent Additions: date + what changed + what it connects to
-- ## Suggested Next: top 5 stubs prioritized by score (inbound links × cross-domain reach × synthesis potential); list each with a one-line rationale
+- ## Suggested Next: rebuilt from the latest lint report at every compile run:
+  1. Pull stub candidates: `grep "^\- \`\[\[" lint/lint-check/$(ls -t lint/lint-check/ | head -1)`
+  2. Filter any candidate whose slug already has a file under `wiki/`: `find wiki/ -name "[slug].md"` — discard if output is non-empty
+  3. Score remaining on five dimensions (1–10 each, sum to 50): inbound link count across `wiki/`; cross-domain reach (distinct MOCs referencing the stub); cross-domain bridge potential (would filling it enable new `_concepts/` connections?); MOC alignment (listed under `## Open Territory` in any MOC); synthesis claim potential (would filling it enable a new MOC synthesis claim)
+  4. Write top 5 — slug, score, one-line rationale from the lint report entry. Remove all struck-through entries from prior runs; section reflects current graph state only.
 
 **wiki/_index/MOC-INDEX.md** — for agents needing domain orientation first:
 - Every MOC with its ## Argument text (verbatim)
