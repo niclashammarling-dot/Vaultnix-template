@@ -6,7 +6,6 @@ source: braindex-template
 date: 2026-05-09
 related:
   - [[agent-operated-knowledge-systems]]
-  - [[session-opener-skill]]
   - [[vault-nightly-draft-workflow]]
   - [[spreading-activation]]
   - [[within-system-contrast]]
@@ -22,7 +21,7 @@ Concept articles emerge from two structurally distinct sources that require diff
 
 - [[within-system-contrast]] — the confirming instance: the concept was not in `compensatory-prompt-design` alone, not in `moc-as-argument` alone, but in the structural fact that both articles used the same detection move without naming it
 - [[vault-nightly-draft-workflow]] — the nightly agent's single-article reading is the right mechanism for category 1; encoding the category boundary explicitly prevents the workflow from being incorrectly expanded to cover category 2
-- [[session-opener-skill]] — the concept prompt in Step 3 is load-bearing precisely because it catches what the nightly agent cannot; it is the extraction mechanism for category 2
+- the session opener skill — the concept prompt in Step 3 is load-bearing precisely because it catches what the nightly agent cannot; it is the extraction mechanism for category 2
 - [[agent-operated-knowledge-systems]] — the category boundary is an architectural constraint, not a quality deficit; no improvement to the automated layer can bridge a structural limitation
 
 ## Details
@@ -48,7 +47,7 @@ The session opener's Step 3 concept prompt ("what concept is implied across mult
 
 A related gap: the current compilation template has no step that asks whether the MOC's argument still holds as a whole after a new synthesis claim is added. Fast claim accumulation without a MOC-level check is the mechanism by which an argumentative MOC degrades into a list of claims dressed as an argument — the exact failure mode `moc-as-argument` names.
 
-The mandatory fix: the MOC update step in compilation-skill Step 4 must include a removal test before any new synthesis claim is added. "If this MOC were removed, would the domain articles still collectively answer the domain's central question, or would a reasoning gap remain?" The test must be mandatory; optional checks at compile time are skipped under time pressure.
+The mandatory fix: the MOC update step in the compilation skill Step 4 must include a removal test before any new synthesis claim is added. "If this MOC were removed, would the domain articles still collectively answer the domain's central question, or would a reasoning gap remain?" The test must be mandatory; optional checks at compile time are skipped under time pressure.
 
 ## Visual References
 
@@ -57,10 +56,10 @@ None.
 ## Connections
 
 - [[vault-nightly-draft-workflow]] — the category boundary must be encoded here as an architectural fact: single-article reading is the right mechanism for category 1; cross-article emergent concepts require human extraction; the two categories are not interchangeable
-- [[session-opener-skill]] — Step 3 concept prompt is the extraction mechanism for category 2; its load-bearing status should be noted explicitly in the skill (not just treated as a bonus observation step)
+- the session opener skill — Step 3 concept prompt is the extraction mechanism for category 2; its load-bearing status should be noted explicitly in the skill (not just treated as a bonus observation step)
 - [[within-system-contrast]] — the founding confirmed instance of a category 2 concept; emerged from holding `compensatory-prompt-design` and `moc-as-argument` simultaneously; invisible to any single-article reader
 - [[agent-operated-knowledge-systems]] — the category boundary is an architectural constraint on the AOKS model, not a deficit; the human loop's irreplaceable contribution is cross-article pattern recognition
-- [[compilation-skill]] — Step 4 MOC update requires a mandatory removal test before any new synthesis claim; this finding identified the current absence of that test
+- the compilation skill — Step 4 MOC update requires a mandatory removal test before any new synthesis claim; this finding identified the current absence of that test
 
 ## Open Questions
 

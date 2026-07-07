@@ -10,8 +10,6 @@ related:
   - [[moc-as-argument]]
   - [[stub-as-signal]]
   - [[spreading-activation]]
-  - [[session-opener-skill]]
-  - [[compilation-skill]]
 moc: [knowledge-work-moc]
 status: active
 ---
@@ -58,9 +56,9 @@ Within-system contrast is operative when all four conditions hold:
 - [[compensatory-prompt-design]] — primary source; "The Pattern That Makes It Visible" section names within-system contrast explicitly as the detection mechanism; the TCX teacher/counselor and APEX Lock 1–4/Lock 5 tables are the clearest instantiation in the vault.
 - [[moc-as-argument]] — second confirmed instance; argumentative vs. routing MOC implementations within the same vault graph; within-system contrast is the implicit heuristic behind the removal test comparison.
 - [[stub-as-signal]] — within-system contrast observations produce concept candidates before any article exists; they become stubs when named, and the stub score reflects the cross-domain reach of the underlying contrast.
-- [[session-opener-skill]] — Step 3 ("any observations from recent work that haven't been named yet?") is the session mechanism designed to catch within-system contrast before the observation is lost; this article is the theory basis for what Step 3 is listening for.
+- the session opener skill — Step 3 ("any observations from recent work that haven't been named yet?") is the session mechanism designed to catch within-system contrast before the observation is lost; this article is the theory basis for what Step 3 is listening for.
 - [[spreading-activation]] — once a concept is extracted via within-system contrast and compiled, activation propagates to all articles that contain the underlying structural asymmetry; the two confirmed instances had activation spread to six existing articles on 2026-05-09 compile.
-- [[compilation-skill]] — the concept prompt in Step 3 of the session opener is a compilation input; within-system contrast explains why that prompt reliably surfaces extractable concepts rather than vague impressions.
+- the compilation skill — the concept prompt in Step 3 of the session opener is a compilation input; within-system contrast explains why that prompt reliably surfaces extractable concepts rather than vague impressions.
 
 ## Falsification Status
 
