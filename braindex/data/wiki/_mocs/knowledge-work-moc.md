@@ -30,8 +30,6 @@ This domain is about designing knowledge systems that compound — where each pi
 - [[spreading-activation]] — how one source ripples through the graph; the anti-isolation mechanism
 - [[hook-enforcement]] — mechanical validation before commit; the structural/graph/quality separation
 - [[vault-knowledge-workflow-design]] — the full raw → compile → session cycle and how each phase feeds the next
-- [[cross-article-concept-extraction]] — the category boundary between single-article derivable concepts and cross-article emergent concepts; the session-opener concept prompt is the extraction mechanism for the second category
-- [[within-system-contrast]] — the concept extraction heuristic for detecting load-bearing structural asymmetries; the detection mechanism for cross-article emergent concept candidates
 
 ### Theoretical Grounding
 - [[external-cognition]] — the off-loading model; why file-over-app and why the agent operates the external system
@@ -49,6 +47,7 @@ Every domain's MOC should link back to [[vault-knowledge-workflow-design]] — i
 
 ## Open Territory
 
+- Benchmark methodology for measuring vault quality over time — what does a well-functioning vault score, and on what dimensions?
 - Multi-agent vault sharing — what breaks when two agents compile simultaneously, and what coordination mechanisms are required?
 - Tiered context management for large vaults — when selective context is insufficient, what is the right escalation?
-- The point at which vault size makes the session-opener-skill stub-scoring approach break down — too many high-value stubs to surface meaningfully
+- The point at which vault size makes the SESSION_OPENER stub-scoring approach break down — too many high-value stubs to surface meaningfully

@@ -1,0 +1,84 @@
+# scaffold_manifest.yaml
+#
+# Categories answer: where does this file's truth live?
+# Transforms answer: how does it appear at the destination?
+# These are orthogonal axes. Three categories hold permanently;
+# the transforms map grows independently as rendering needs arise.
+#
+# synced         — dev vault is canonical. Sync direction: dev → scaffold.
+#                  Never edit directly in braindex/data/. Diff comparison
+#                  uses render(dev_file) for files with transforms entries.
+#
+# adapted        — exists in both trees with intentionally different content
+#                  that cannot be bridged by transforms. Manual review only;
+#                  never auto-synced. Current instance: compile authority
+#                  reference is structurally different between trees by design.
+#
+# scaffold_native — only in braindex/data/. Must never appear in dev vault.
+#                  Identified by {{OWNER}} / {{TODAY}} placeholders or
+#                  seeded stub structure (INDEX, INSPIRATION, MOC-INDEX).
+#
+# dev_only       — only in dev vault root. Must never appear in braindex/data/.
+
+synced:
+  - wiki/_concepts/agent-traversal.md
+  - wiki/_concepts/external-cognition.md
+  - wiki/_concepts/moc-as-argument.md
+  - wiki/_concepts/small-world-topology.md
+  - wiki/_concepts/spreading-activation.md
+  - wiki/_concepts/stub-as-signal.md
+  - wiki/_concepts/within-system-contrast.md
+  - wiki/knowledge-work/cross-article-concept-extraction.md
+  - wiki/knowledge-work/vault-knowledge-workflow-design.md
+  - wiki/_mocs/knowledge-work-moc.md
+  - Vault/SESSION_OPENER.md
+  - templates/article.md
+  - templates/concept.md
+  - templates/session.md
+
+adapted:
+  # hook-enforcement.md: compile authority reference differs by design.
+  #   dev      → "COMPILATION_PROMPT handles quality checks" (dev-only file)
+  #   scaffold → "compilation-skill handles quality checks" (scaffold-native)
+  #   Each copy is internally correct. Not bridgeable by transforms.
+  - wiki/_concepts/hook-enforcement.md
+
+scaffold_native:
+  # Skill articles with {{OWNER}} placeholders — no dev vault counterpart.
+  - wiki/_skills/compilation-skill.md
+  - wiki/_skills/session-opener-skill.md
+  - wiki/_skills/session-agenda-skill.md
+  # GHA workflow — shipped as a user convenience; no dev vault counterpart.
+  - github/workflows/weekly-lint.yml
+
+independent:
+  # Exists in both trees with legitimately divergent lives. Same path, same name;
+  # the scaffold's copy is a seeded stub a new user evolves from scratch, the
+  # dev vault's copy is the live evolved state. Drift is expected and correct.
+  # Detector checks existence only — content comparison is meaningless here.
+  #
+  # Silence in the manifest means *unclassified*. Files that appear in both
+  # trees without a manifest entry are a schema gap, not an implicit independent.
+  - wiki/_index/INDEX.md
+  - wiki/_index/MOC-INDEX.md
+  - wiki/_index/INSPIRATION.md
+  - CLAUDE.md
+  - vault.config.yaml
+  - .gitignore
+
+dev_only:
+  # COMPILATION_PROMPT.md is the dev vault's compile authority.
+  # scaffold uses compilation-skill.md (scaffold-native), which explicitly
+  # declares COMPILATION_PROMPT superseded for new users. Syncing this down
+  # would ship a contradiction.
+  - Vault/COMPILATION_PROMPT.md
+
+# Transforms are applied when syncing dev → scaffold for files in `synced`.
+# Rules are applied in order; each rule must match exactly once or the sync
+# run raises (see sync_scaffold.py). The diff comparison for transformed files
+# uses render(dev_file), not the raw dev file — post-transform divergence from
+# dev is expected and correct; the transform layer is where this is verified.
+transforms:
+  Vault/SESSION_OPENER.md:
+    - find: "# VAULTNIX1.0 SESSION OPENER"
+      replace: "# BRAINDEX SESSION OPENER"

@@ -1,79 +1,46 @@
 ---
 title: MOC as Argument
-type: concept
-projects: [knowledge-work, vault]
-tags: [knowledge-work/structure, vault/compilation]
+project: knowledge-work
+tags: [knowledge-work/architecture, knowledge-work/graph]
 source: braindex-template
-date: 2026-05-08
-related:
-  - [[compilation-skill]]
-  - [[skill-layer-architecture]]
-  - [[small-world-topology]]
-  - [[stub-as-signal]]
-  - [[agent-traversal]]
-  - [[spreading-activation]]
-  - [[hook-enforcement]]
+date: 2026-04-08
+related: [small-world-topology, agent-traversal, spreading-activation]
 moc: [knowledge-work-moc]
 status: active
 ---
 
-# MOC as Argument
+## Summary
 
-## The Argument
+A Map of Content is not a table of contents. The distinction is structural: a table of contents organizes articles by category; a MOC makes a claim about how articles in its domain relate and what that relationship implies. A MOC that is a list has failed — it provides no synthetic value beyond what the individual articles already contain. A MOC that makes an argument gives an agent the shape of a domain before it reads a single article, enabling it to navigate toward what matters rather than scanning everything.
 
-A Map of Content fails when it routes. It succeeds when it argues.
+## Key Concepts
 
-The test is the removal test: remove the MOC and observe what is left. If the domain articles are still connected through their own wikilinks but merely orphaned — no hub, no home — the MOC was a routing device. If removing it leaves a reasoning gap — a central tension unnamed, a synthesis unanchored, a set of articles that can still be reached but no longer traversed toward a conclusion — the MOC was doing argumentative work that no individual article does.
+- [[small-world-topology]] — MOCs are the clustering mechanism; they create the local hubs that give the graph its small-world property
+- [[agent-traversal]] — MOCs are the primary traversal entry point; the Argument section orients the agent before it drills in
+- [[spreading-activation]] — Synthesis Claims accumulate from repeated spreading activation across the domain
+- [[stub-as-signal]] — Open Territory sections in MOCs are the highest-priority stub signals
+- [[vault-knowledge-workflow-design]] — MOC maintenance is a mandatory step in every compile run
 
-This is not a preference for better writing in MOC prose. It is a structural claim about what an agent can do with a domain once it has entered through the MOC. A routing MOC gives the agent a list of addresses. An argumentative MOC gives the agent an orientation that makes traversal meaningful. The difference is the difference between retrieval and synthesis.
+## Details
 
-## The Shared Structure
+**The Argument section** (2-3 sentences) is the MOC's core function. It answers: what is this domain about, and what is the central tension or design question? Written for an agent that needs the shape of the domain before navigating into it — not a description of what the MOC contains, but a claim about how the domain works.
 
-An argumentative MOC has three properties:
+**Core Articles:** not "which articles exist" but "which 3-5 articles must be read to understand the domain structure, and why are they foundational?" One clause each on why they matter structurally — not what they cover.
 
-1. **It names a tension** — the unresolved question or competing pull that the domain articles individually address but do not resolve. Not a topic; a tension. "Signal quality vs. execution discipline" is a tension. "APEX trading articles" is a topic.
+**Synthesis Claims:** 2-4 claims that only emerge from reading the domain together — things visible at the MOC level but not within individual articles. These are the product of accumulated spreading activation. A domain with no Synthesis Claims has not been compiled deeply enough.
 
-2. **It asserts a relationship** — a claim about how the domain's core concepts, methods, or practices relate to each other that would be invisible from any single article. The claim creates a perspective that makes individual articles legible as parts of a coherent whole.
+**MOC drift:** a MOC that grows toward a mere list should have its Argument section rewritten before adding more articles. The signal: Synthesis Claims section is empty or the Argument describes the domain rather than asserting something about it.
 
-3. **It stakes a position** — on what matters in the domain, what the central question is, what the domain is for. A MOC that describes the domain without taking a position on it is a table of contents.
+**Cross-domain connections** in MOCs are the highest-value links in the graph. They create small-world shortcuts: an agent navigating one domain can jump directly to another domain's conceptual center rather than traversing through individual articles.
 
-A list MOC has none of these. It groups articles by topic, organizes them into clusters, and provides navigation. An agent entering through a list MOC can reach every article but cannot derive a synthesis direction from the entry point. The agent has been given a map with roads but no destination.
-
-**The general case.** This failure mode — description without claim — is not specific to MOC articles. A session audit that logs what happened without surfacing a finding is a list. A concept article that defines a phenomenon without classifying its instances is a list. A compilation prompt that specifies steps without stating what a good compile is trying to achieve is a list. The MOC is the highest-stakes instance because it is the agent's entry point for every domain traversal.
-
-## Domain Instances
-
-*The following instances are from the vault this concept was compiled in. Your instances will differ; the pattern is what transfers.*
-
-The current vault MOCs each pass the removal test in a domain-specific way.
-
-**apex-moc** — "APEX improves not by rewriting its rules but by adding to them." This argument makes the nightly audit's additive-only design legible as a principled position rather than an arbitrary constraint. Remove it and the articles about gate architecture and mechanical checks still link to each other, but the reasoning that explains *why* the audit is additive — the tension between signal quality and execution discipline resolved through compounding structural integrity rather than iterative rewriting — disappears. Agents traverse the domain; they cannot derive why the design is the way it is.
-
-**teaching-moc** — "dissociation cases are where intervention design actually matters." This argument makes Legilexi and FAT cohere into a clinical reasoning system rather than two independent instrument descriptions. Remove it and both instruments are still documented, but the principle that makes dissociation data actionable — that global scores flatten exactly the profiles requiring targeted intervention — is gone. Traversal reaches the articles; synthesis about what to do with a profile does not follow.
-
-**tcx-moc** — "automation runs, but a human-readable trace exists for every decision." This stakes a position on what the Validation Gate is for: not quality control on agent outputs, but the mechanism that makes agent autonomy safe. Remove it and the Inspector and Validation Gate articles still describe their architectures, but the argument explaining why both are necessary — the tension between agent autonomy and pedagogical accountability — is not recoverable from any individual article.
-
-**hiking-moc** — "the brand works because it allows the landscape to speak through restraint." This is the position that makes every brand and copy decision legible: over-explanation is the specific failure mode, not poor execution. Remove it and the brand articles are present, but an agent working on copy has no principled basis for knowing when a sentence is too much rather than too little.
-
-**A failing MOC** would claim: "This domain contains articles about X." An agent entering such a MOC can reach every article and derive nothing from the entry point that it could not derive from the flat INDEX.
-
-## What It Is Not
-
-Not a claim about length. A three-sentence argument that names the domain's central tension passes the test. A ten-section MOC with synthesis claims and a full article inventory may fail it if none of the prose stakes a position.
-
-Not a claim about comprehensiveness. A MOC does not need to list every article in the domain. Listing articles is what the INDEX is for.
-
-Not the same as [[hook-enforcement]]. Hooks verify structural properties — orphan checks, missing `moc:` fields, broken links. The removal test is a semantic check that no hook can perform mechanically. MOC quality is a human-in-the-loop compilation judgment, not a lint violation.
+**Cluster splitting rule:** when a topic cluster exceeds 8 articles, split it. Document the split in Synthesis Claims — the fact that the cluster needed splitting is itself a claim about the domain's structure.
 
 ## Connections
 
-- [[compilation-skill]] — MOC update is a required step in every compilation run; the test is whether the connection updates the MOC's argument, not only its article inventory. This article is the theory basis for that standard.
-- [[small-world-topology]] — argumentative MOCs are better clustering hubs because they give agents a reasoning orientation on entry, enabling directional traversal rather than undirected search.
-- [[stub-as-signal]] — a stub beneath an argumentative MOC is an *argument gap*: its absence creates a specific reasoning hole in the domain's synthesis claims, not merely a missing article. This is why stub priority scoring includes MOC alignment as a dimension.
-- [[agent-traversal]] — the specific traversal failure when a MOC is a list: standard path traversal succeeds (MOC → articles in two hops), but synthesis queries fail because no argument was loaded at the entry point.
-- [[spreading-activation]] — activation from an argumentative MOC propagates through the argument's claims and their connected articles; activation from a list-MOC has no directional bias and produces undirected search.
-- [[within-system-contrast]] — the heuristic used implicitly here; comparing argumentative vs. routing MOC instances within the same vault graph is a within-system contrast that named the moc-as-argument concept; this article is the second confirmed instance.
-- [[promotion-threshold]] — the removal test and the promotion threshold share the same underlying logic: both ask whether removing the artifact would leave a reasoning gap; the test is the operative standard in both the MOC and the article compilation contexts
+- [[small-world-topology]] — MOCs create the clustering component of small-world topology; they are the local hubs around which domain articles organize
+- [[agent-traversal]] — the MOC Argument section is the first thing an agent reads when entering a domain; the quality of that Argument determines the efficiency of everything that follows
+- [[spreading-activation]] — MOC Synthesis Claims are the accumulated output of spreading activation; they capture what the domain knows collectively
+- [[hook-enforcement]] — graph hooks require every article to reference its MOC; this enforcement keeps MOCs current as the vault grows
 
 ## Open Questions
 

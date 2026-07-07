@@ -1,5 +1,5 @@
 # ============================================================
-# BRAINDEX SESSION OPENER
+# VAULTNIX1.0 SESSION OPENER
 # Paste into Claude Code at the start of any working session.
 # Reads the vault, surfaces what it most needs, primes the work.
 #
