@@ -31,6 +31,7 @@ Every learning must compound the graph.
 When {{OWNER}} says "wrap up", "close session", "commit and conclude", or similar:
 1. Write a session note to `outputs/[project]/YYYY-MM-DD-[topic].md` using `templates/session.md`.
 2. Run `python3 scripts/compile.py` so the session enters the permanent graph.
+3. Run `python sync_scaffold.py --check` and surface any drift before committing.
 
 ### Vault Structure
 
