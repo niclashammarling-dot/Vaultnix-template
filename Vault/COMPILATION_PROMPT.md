@@ -244,6 +244,24 @@ What would an agent wish existed here?]
 
 ## STEP 5 — WRITE / UPDATE CONCEPT ARTICLES
 
+**Candidate triage gate (fires when a candidate note is first read for evaluation in a session — before any instance work, evidence collection, or evaluation discussion):**
+
+Trigger: the moment a candidate pattern is named for evaluation, apply the four qualifying criteria before any instance arithmetic begins. If a `check1_triage:` field is already present in the candidate's frontmatter, triage already ran — skip to instance work. If the field is absent, triage is required first.
+
+Four criteria (from the vault's concept article in `_concepts/`):
+- **Cross-domain:** operative in ≥2 distinct domains. Name each domain explicitly.
+- **Classification function:** picks out instances from non-instances. State what would NOT be an instance.
+- **Inferential potential:** knowing something is an instance licenses at least one downstream conclusion. Name it.
+- **Abstract:** not a concrete domain-specific label.
+
+Record the result in the candidate note's frontmatter as a required field:
+- Pass: `check1_triage: "passed ([criterion]: [qualifier if thin]; ...) YYYY-MM-DD. [Forward instruction for next evaluator if any.]"`
+- Fail: `check1_triage: "failed-[criterion] YYYY-MM-DD — [one sentence on why]"`
+
+A failed triage routes to `wiki/_drafts/` immediately. Do not hold, count instances, or hunt for confirming evidence. A thin cross-domain pass must be recorded with its qualifier — it shapes what counts as a strengthening instance. The write-time qualification gate below becomes re-verification for scope drift, not a first encounter.
+
+---
+
 Concepts that appear substantively in 3+ articles across 2+ projects get their own article in wiki/_concepts/ using templates/concept.md.
 
 Each concept article must:
