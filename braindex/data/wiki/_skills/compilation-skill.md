@@ -280,6 +280,16 @@ Before committing a `_concepts/` article, check the `## Appears In` instances:
 - If majority of `## Appears In` instances are same-session articles: the concept's "cross-domain evidence" is circular — the spreading activation that generated those links was driven by the same session that generated the concept. Block the commit; route to `wiki/_drafts/` instead.
 - A concept grounded primarily in pre-existing articles that were not written to fit it is a candidate for `_concepts/`. A concept grounded primarily in articles written in the same session is a refined idea, not a tested concept.
 
+**Mechanical definition of "pre-session" (required — prose intuition is insufficient):**
+
+An instance counts as pre-session if and only if BOTH conditions hold:
+1. Its first recorded timestamp (raw/ file creation date or wiki/ article date) precedes the current session's start
+2. A compile run occurred between the instance's recording and this session (i.e., the instance is not merely filed but entered the committed graph in a prior run)
+
+A same-calendar-day session does NOT automatically qualify as pre-session: two sessions by the same person in one continuous epistemic episode share the same evidence-generation burst, regardless of whether a technical session boundary exists between them. Only the presence of a committed compile run between the two distinguishes them as genuinely independent. Without a prior commit separating them, they count as same-session for source-diversity purposes.
+
+This criterion is lint-checkable: for each claimed pre-session instance, verify `git log --after=[instance-date] --before=[current-session-start] -- wiki/` shows at least one compile commit. If no compile commit exists in that window, the instance is same-session regardless of its timestamp.
+
 **Third failure mode — accurate claim, misattributed evidence:**
 
 An article can fail source-diversity not because its evidence is circular but because its self-description of that evidence is inaccurate. The article may log a prior independent instance as "same-session." The fix is correct attribution of existing evidence, not new evidence.
