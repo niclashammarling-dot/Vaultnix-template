@@ -45,6 +45,10 @@ adapted:
 
 scaffold_native:
   # Skill articles with {{OWNER}} placeholders — no dev vault counterpart.
+  # Methodology edits (e.g. new compilation gate, new session-opener step)
+  # propagate manually from the corresponding dev vault skill article.
+  # Accepted risk: propagation depends on remembering at compile time.
+  # Defended version: transforms entry. Current decision: manual is sufficient.
   - wiki/_skills/compilation-skill.md
   - wiki/_skills/session-opener-skill.md
   - wiki/_skills/session-agenda-skill.md
@@ -68,10 +72,16 @@ independent:
 
 dev_only:
   # COMPILATION_PROMPT.md is the dev vault's compile authority.
-  # scaffold uses compilation-skill.md (scaffold-native), which explicitly
+  # scaffold uses compilation-skill.md (scaffold_native), which explicitly
   # declares COMPILATION_PROMPT superseded for new users. Syncing this down
   # would ship a contradiction.
   - Vault/COMPILATION_PROMPT.md
+  # audit-skill.md is dev_only: compile authority is universal (scaffold);
+  # audit practice is emergent (dev_only). audit-skill accumulates personal
+  # domain vocabulary (APEX slugs, project canonical names) that would
+  # mislead a scaffold user before they have a vault. Each Braindex user
+  # develops session-close practice from use, not from a shipped template.
+  - wiki/_skills/2026-04-11-audit-skill.md
 
 # Transforms are applied when syncing dev → scaffold for files in `synced`.
 # Rules are applied in order; each rule must match exactly once or the sync
