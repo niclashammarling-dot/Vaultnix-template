@@ -180,6 +180,50 @@ Log every violation: `HOOK FAIL [file.md]: [type] — [issue] — [fix]`
 
 ---
 
+### Step 2D — Near-slug retargeting (required for every `_concepts/` write)
+
+Fires immediately after Step 2C passes for any new `_concepts/` article — before spreading activation, before index updates. The date-prefix naming convention renames every concept at compile time; working-name links accumulated during the candidate period become ghost stubs the moment the article commits. This step clears them in the same commit.
+
+**When to run:** any time an article is written to `wiki/_concepts/`. Does not apply to domain articles or skills (those are not renamed by the date-prefix convention in a way that systematically drifts from working names).
+
+**Procedure:**
+
+1. Derive the content slug: remove the `YYYY-MM-DD-` prefix from the article filename.
+   - Example: `2026-07-24-described-but-undefended-boundary` → content slug = `described-but-undefended-boundary`
+
+2. Search wiki/ and raw/ for wikilinks using the content slug:
+   ```bash
+   grep -rn "\[\[described-but-undefended-boundary\]\]" wiki/ raw/ --include="*.md"
+   ```
+   (Substitute the actual content slug.)
+
+3. For each hit: replace `[[{content-slug}]]` with `[[{full-dated-slug}]]` in place.
+   - This is a mechanical string replacement — no judgment required.
+   - Every link is wrong by construction (the dated slug is the canonical article; the undated slug has no file), so replace all of them.
+
+4. After replacing, add the content slug to `lint/confirmed-ghosts.md` as a retargeted entry:
+   ```
+   | {content-slug} | {full-dated-slug} | {today} | {session-slug} |
+   ```
+   **Scaffold note:** `lint/confirmed-ghosts.md` may not exist in a fresh vault. If absent, create it with this header before appending:
+   ```
+   # Confirmed Ghosts
+   | slug | retargeted-to | date | session |
+   |------|---------------|------|---------|
+   ```
+   The quarantine entry persists as a record that the ghost was created and cleared. If any link was missed, the lint will annotate it as a confirmed ghost on the next run rather than re-presenting it as a live candidate.
+
+5. Log all retargets in the compile report:
+   ```
+   Near-slug retargets ({content-slug} → {full-dated-slug}):
+     → wiki/path/to/file.md:line — [[content-slug]] → [[full-dated-slug]]
+   ```
+   If zero retargets: log "0 working-name links found" — this is the expected state for concepts whose candidate period was short or whose working name was never linked.
+
+**Failure mode this prevents:** the ghost-stub pipeline default — a concept that accumulates 10+ working-name links over a candidate period, compiles under a dated slug, and immediately creates 10+ ghost entries in the next lint report, appearing as high-scoring candidates in the next session's agenda.
+
+---
+
 ### Step 3 — Spreading activation
 
 For any changed neighborhood: update Summary, Details, Connections, Open Questions as needed.
