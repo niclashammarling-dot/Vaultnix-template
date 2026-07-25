@@ -76,6 +76,13 @@ Select the top scorer. If top score is below 20, note this in the output.
 
 **Benchmark-tuned weighting:** if a benchmark run exists in `lint/benchmark/`, check the most recent score. If Surprise (SU) is the weakest dimension, weight cross-domain reach ×1.5. If Synthesis (SY) is weakest, weight synthesis potential ×1.5. If no benchmark run exists, use equal weights.
 
+**3e — Domain allocation check (runs after top scorer is selected)**
+Read the two most recent concept entries in `wiki/_index/CONCEPT-INDEX.md` (sorted by date descending — the last two `date:` frontmatter dates). Extract the filing domain from each entry's file path (`wiki/domains/[domain]/` → domain; `wiki/_concepts/` → cross-domain, check the article's `project:` frontmatter). If both are `knowledge-work` or `vault`, apply the allocation rule: override the top scorer with the highest-scoring candidate whose filing domain is neither `knowledge-work` nor `vault`. If no such candidate exists in the current lint report, proceed with the top scorer and note "allocation rule: no non-KW/vault candidate above threshold."
+
+**Rule text (adopted 2026-07-25, plain filing-domain version):** After 2 consecutive concept compiles filed under `knowledge-work` or `vault` domain, the next compile slot goes to the top-scoring candidate from any other domain.
+
+**Amendment pending (file in a disinterested session):** Whether a concept whose majority of confirmed instances are non-KW/vault should be exempt from triggering the consecutive-KW condition — i.e., cross-domain credit should count against the rule's trigger. Not decided 2026-07-25 because no live candidate was disinterested at that session. Decide and encode this clause when no candidate benefits from the ruling.
+
 ### Step 4 — Vault improvement candidate
 
 Read `wiki/_mocs/knowledge-work-moc.md` — extract the first actionable item from `## Open Territory` that is not struck through and not already a committed stub. Prefer items that reduce friction in existing workflows over net-new infrastructure.
