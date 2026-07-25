@@ -175,6 +175,7 @@ Run after every individual file write. Fix structural and graph hooks before pro
 
 **Source file hook (after all hooks pass):**
 - [ ] Update the source raw file's `compiled:` field from `false` to `true` — this is the final write of a successful compile run; an agent reading a raw file with `compiled: false` knows it has not yet been processed; `compiled: true` means a wiki article exists for this source
+- [ ] **Concept candidate notes** (`raw/notes/` files with `type: concept-candidate`) — do NOT delete; instead flip `compiled: false → true` AND stamp `compiled_as: [canonical-article-slug]` in the same frontmatter write. The `compiled_as:` field is required so the session-agenda-skill's compiled-matcher can identify a compiled candidate even when the candidate filename differs from the compiled article's slug (e.g. `-instance-provenance` suffix, concept renamed at compile). Without it, the matcher produces false negatives and the concept candidate count is wrong.
 
 Log every violation: `HOOK FAIL [file.md]: [type] — [issue] — [fix]`
 

@@ -49,6 +49,8 @@ Read lines 7–15 of `wiki/_index/INDEX.md`. Surface each entry under `## Pendin
 - Carry forward → leave unchanged
 - Drop → remove entry, note reason in session audit
 
+**Wiring constraint — opener-suppressed commitments:** A commitment whose payload requires opener suppression (e.g. a baseline measurement that must run before the opener reads any state) is structurally incompatible with this step. The opener IS the channel that surfaces it; any session that learns about it here has already invalidated the measurement condition. The correct disposition: spawn a named-task session (opener-skip fires automatically), execute the task there, and strike the commitment when the result lands. The `{what completing it requires}` field in the INDEX.md commitment line should state "requires opener-suppressed session" explicitly — this is the only signal that distinguishes a normal carry-forward from one that must be spawned. Without it, the next opener surfaces it as a normal work item and the structural conflict recurs.
+
 Do not proceed to Step 2 until all surfaced commitments have a response.
 
 **Step 2 — Regenerate SESSION_AGENDA.md**
