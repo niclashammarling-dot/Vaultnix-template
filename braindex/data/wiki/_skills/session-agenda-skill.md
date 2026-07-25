@@ -60,7 +60,15 @@ For each candidate, check if the file exists:
 ls wiki/_concepts/[slug].md   # cross-domain concepts
 ls wiki/[domain]/[slug].md    # domain articles
 ```
-Reject any candidate where the file exists — the lint report may be stale. Also reject any candidate that appears as "NEW" in INDEX.md Recent Additions with a date after the lint report date. Read INDEX.md with `offset=1 limit=80` — this covers 2–3 recent compile entries and is sufficient; do not read the full file.
+Reject any candidate where the file exists — the lint report may be stale.
+
+Also reject any candidate whose slug appears as a confirmed ghost:
+```bash
+grep "^| [slug] " lint/confirmed-ghosts.md
+```
+If the command returns any output, reject — confirmed-ghosts.md maps working-name slugs to their canonical compiled articles. Consult this file before scoring, not after; a ghost reaching the scoring step is a filter failure. Note that the lint report itself will already annotate confirmed ghosts if the report postdates confirmed-ghosts.md — this filter catches the case where the lint report predates the quarantine file.
+
+Also reject any candidate that appears as "NEW" in INDEX.md Recent Additions with a date after the lint report date. Read INDEX.md with `offset=1 limit=80` — this covers 2–3 recent compile entries and is sufficient; do not read the full file.
 
 **3c — Score remaining candidates**
 Four dimensions, 1–10 each, sum to 40:
@@ -121,7 +129,7 @@ Pending Commitments: {none} OR:
 {label}
 → {one line: what friction it resolves or capability it unlocks}
 
-## Top Stub
+## Top Stub (per lint {lint-report-date})
 [[slug]] — {score}/40 — {domains}
 → {one line: why it matters now}
 ```
